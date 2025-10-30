@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Calculadora 10% OFF</title>
+<style>
+:root{--bg:#222;--card:#2b2b2b;--accent:#ff7a00;--text:#fff;--success:#00ff66}
+body{background:var(--bg);color:var(--text);font-family:sans-serif;padding:16px;max-width:480px;margin:auto}
+#botones{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
+button{padding:12px;border-radius:8px;border:0;font-size:16px;cursor:pointer}
+.combo{background:var(--accent);color:white}
+input{width:100%;padding:10px;border-radius:8px;border:1px solid #444;background:transparent;color:var(--text);font-size:16px;margin-bottom:8px}
+.controls,.actions{display:flex;gap:8px;margin-bottom:8px}
+.result{background:var(--card);padding:12px;border-radius:8px;min-height:56px}
+.lista{margin-top:8px;font-size:15px}
+.total{margin-top:10px;font-weight:700}
+.final{display:block;font-size:32px;font-weight:800;color:var(--success);margin-top:8px}
+.muted{color:#bbb;font-weight:500}
+.danger{background:#8b0000;color:white}
+.ghost{background:transparent;border:1px solid #555;color:var(--text)}
+</style>
+<link rel="manifest" href="manifest.json">
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js');
+  });
+}
+</script>
+</head>
+<body>
+<h2>Calculadora 10% OFF</h2>
+<div id="botones">
+<button class="combo" onclick="agregarItem('Cuarto simple',11900)">Cuarto simple<br><span class="muted">$11.900</span></button>
+<button class="combo" onclick="agregarItem('Big simple',11900)">Big simple<br><span class="muted">$11.900</span></button>
+<button class="combo" onclick="agregarItem('Cuarto doble',13500)">Cuarto doble<br><span class="muted">$13.500</span></button>
+<button class="combo" onclick="agregarItem('Big doble',13500)">Big doble<br><span class="muted">$13.500</span></button>
+<button class="combo" onclick="agregarItem('Cheddar doble',15500)">Cheddar doble<br><span class="muted">$15.500</span></button>
+<button class="combo" onclick="agregarItem('Cheddar triple',18000)">Cheddar triple<br><span class="muted">$18.000</span></button>
+<button class="combo" onclick="agregarItem('Cheddar Bacon',16500)">Cheddar Bacon<br><span class="muted">$16.500</span></button>
+<button class="combo" onclick="agregarItem('Papas simples',2999)">Papas simples<br><span class="muted">$2.999</span></button>
+<button class="combo" onclick="agregarItem('Papas dobles',4750)">Papas dobles<br><span class="muted">$4.750</span></button>
+<button class="combo" onclick="agregarItem('Papas Galaxia',9000)">Papas Galaxia<br><span class="muted">$9.000</span></button>
+<button class="combo" onclick="agregarItem('Oreo smash',3900)">Oreo smash<br><span class="muted">$3.900</span></button>
+<button class="combo" onclick="agregarItem('Extra cheddar',1500)">Extra cheddar<br><span class="muted">$1.500</span></button>
+<button class="combo" onclick="agregarItem('Extra carne',2500)">Extra carne<br><span class="muted">$2.500</span></button>
+<button class="combo" onclick="agregarItem('Extra Bacon',2200)">Extra Bacon<br><span class="muted">$2.200</span></button>
+<button class="combo" onclick="agregarItem('Extra tasty',1000)">Extra tasty<br><span class="muted">$1.000</span></button>
+</div>
+
+<input id="precio" type="number" placeholder="Ingresá precio manual" />
+<div class="controls">
+<button onclick="addManual()" class="ghost">Agregar precio</button>
+<button onclick="calcularParticular()" class="ghost">Calcular 10% OFF</button>
+</div>
+<div class="result" id="resultado">Original: - | 10% OFF: -</div>
+<div class="lista" id="lista"></div>
+<div class="actions">
+<button onclick="borrarUltimo()" class="ghost">Borrar último</button>
+<button onclick="vaciarPedido()" class="danger">Vaciar pedido</button>
+</div>
+<script>
+let items=[]; // reset array
+function agregarItem(nombre,precio){items.push({n:nombre,p:precio});renderLista();}
+function addManual(){const el=document.getElementById('precio');const v=parseFloat(el.value);if(isNaN(v))return;items.push({n:'Manual',p:Math.round(v)});el.value='';renderLista();}
+function calcularParticular(){const el=document.getElementById('precio');const v=parseFloat(el.value);if(isNaN(v)){document.getElementById('resultado').innerText='Ingresá un número válido';return;}const f=Math.round(v*0.9);document.getElementById('resultado').innerText=`Original: $${v.toLocaleString()} | 10% OFF: $${f.toLocaleString()}`;}
+function renderLista(){const c=document.getElementById('lista');if(items.length===0){c.innerHTML='<div class="muted">No hay items</div>';document.getElementById('resultado').innerText='Original: - | 10% OFF: -';return;}
+const grouped={};items.forEach(it=>{grouped[it.n]=grouped[it.n]||{qty:0,sum:0};grouped[it.n].qty++;grouped[it.n].sum+=it.p;});
+let html='';for(const k in grouped){const g=grouped[k];html+=`${k} x${g.qty} — $${g.sum.toLocaleString()}<br>`;}
+const total=items.reduce((a,b)=>a+b.p,0);const desc=Math.round(total*0.9);
+c.innerHTML=`${html}<div class='total'>Total: <strong>$${total.toLocaleString()}</strong></div><div class='final'>$${desc.toLocaleString()} con 10% OFF</div>`;
+document.getElementById('resultado').innerText=`Original: $${total.toLocaleString()} | 10% OFF: $${desc.toLocaleString()}`;}
+function borrarUltimo(){if(items.length===0)return;items.pop();renderLista();}
+function vaciarPedido(){items=[];renderLista();}
+renderLista();
+</script>
+</body>
+</html>
