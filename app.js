@@ -45,10 +45,16 @@ function bindAcciones() {
     .addEventListener('click', borrarUltimo);
 
   document.getElementById('btnVaciar')
-        .addEventListener('click', vaciarPedido);
+    .addEventListener('click', vaciarPedido);
     
   document.getElementById('btnImprimir')
-  .addEventListener('click', imprimirTicket);
+    .addEventListener('click', imprimirTicket);
+  
+  document.getElementById('btnAbrirHistorial')
+    .addEventListener('click', abrirHistorial);
+
+  document.getElementById('btnCerrarHistorial')
+    .addEventListener('click', cerrarHistorial);
 
 }
 
@@ -157,6 +163,16 @@ function vaciarPedido() {
   render();
 }
 
+function abrirHistorial() {
+  document.getElementById('historialPanel').classList.remove('cerrado');
+  renderHistorial();
+}
+
+function cerrarHistorial() {
+  document.getElementById('historialPanel').classList.add('cerrado');
+}
+
+
 // ==============================
 // CÁLCULOS
 // ==============================
@@ -225,6 +241,36 @@ function render() {
   resultado.innerText =
     `Original: $${total.toLocaleString()} | 10% OFF: $${descuento.toLocaleString()}`;
 }
+
+function renderHistorial() {
+  const contenedor = document.getElementById('historialLista');
+  const historial = obtenerHistorial();
+
+  if (historial.length === 0) {
+    contenedor.innerHTML = '<div class="muted">No hay tickets</div>';
+    return;
+  }
+
+  contenedor.innerHTML = '';
+
+  historial.slice().reverse().forEach(ticket => {
+    const div = document.createElement('div');
+    div.className = 'ticket-item';
+
+    div.innerHTML = `
+      <div class="ticket-id">Pedido #${ticket.id}</div>
+      <div class="ticket-meta">${ticket.fecha} ${ticket.hora}</div>
+      <div class="ticket-meta">$${ticket.totalConDescuento.toLocaleString()}</div>
+    `;
+
+    div.addEventListener('click', () => {
+      reimprimirTicket(ticket);
+    });
+
+    contenedor.appendChild(div);
+  });
+}
+
 function obtenerFechaHora() {
   const now = new Date();
 
@@ -246,6 +292,39 @@ function obtenerNumeroPedido() {
   return valor;
 }
 
+function construirTicket(numeroPedido) {
+  const { fecha, hora } = obtenerFechaHora();
+
+  let total = 0;
+
+  pedido.forEach(item => {
+    total += item.precio;
+    if (item.tipo === 'hamburguesa') {
+      item.extras.forEach(extra => {
+        total += extra.precio;
+      });
+    }
+  });
+
+  return {
+    id: numeroPedido,
+    fecha,
+    hora,
+    items: JSON.parse(JSON.stringify(pedido)), // snapshot
+    total,
+    totalConDescuento: Math.round(total * 0.9)
+  };
+}
+
+function guardarTicket(ticket) {
+  const historial = obtenerHistorial();
+  historial.push(ticket);
+  localStorage.setItem('historialTickets', JSON.stringify(historial));
+}
+
+function obtenerHistorial() {
+  return JSON.parse(localStorage.getItem('historialTickets')) || [];
+}
 
 // ==============================
 // IMPRESIÓN DE TICKET
@@ -259,7 +338,7 @@ function imprimirTicket() {
     return;
   }
 
-  const { fecha, hora } = obtenerFechaHora();
+    const { fecha, hora } = obtenerFechaHora();
 
   let html = `
     <html>
@@ -323,6 +402,72 @@ function imprimirTicket() {
     </body>
     </html>
   `;
+  const ticket = construirTicket(numeroPedido);
+  guardarTicket(ticket);
+
+  const win = window.open('', 'PRINT', 'height=600,width=400');
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  win.print();
+  win.close();
+    
+    // Reset estado
+vaciarPedido();
+document.getElementById('numeroPedido').value = '';
+
+}
+
+function reimprimirTicket(ticket) {
+  let html = `
+    <html>
+    <head>
+      <title>Ticket</title>
+      <style>
+        body {
+          font-family: monospace;
+          font-size: 12px;
+          margin: 0;
+          padding: 10px;
+          width: 80mm;
+        }
+        .center { text-align: center; }
+        .line { border-top: 1px dashed #000; margin: 6px 0; }
+        .item { margin-bottom: 4px; }
+        .extra { margin-left: 10px; }
+        .total { font-weight: bold; margin-top: 8px; }
+      </style>
+    </head>
+    <body>
+      <div class="center">
+        <strong>SMASH</strong><br>
+        Pedido #${ticket.id}<br>
+        ${ticket.fecha} ${ticket.hora}
+      </div>
+
+      <div class="line"></div>
+  `;
+
+  ticket.items.forEach(item => {
+    if (item.tipo === 'hamburguesa') {
+      html += `<div class="item">${item.nombre}</div>`;
+      item.extras.forEach(extra => {
+        html += `<div class="extra">+ ${extra.nombre}</div>`;
+      });
+    } else {
+      html += `<div class="item">${item.nombre}</div>`;
+    }
+  });
+
+  html += `
+      <div class="line"></div>
+      <div class="total">TOTAL: $${ticket.total.toLocaleString()}</div>
+      <div class="total">10% OFF: $${ticket.totalConDescuento.toLocaleString()}</div>
+      <div class="line"></div>
+      <div class="center">Reimpresión</div>
+    </body>
+    </html>
+  `;
 
   const win = window.open('', 'PRINT', 'height=600,width=400');
   win.document.write(html);
@@ -331,5 +476,4 @@ function imprimirTicket() {
   win.print();
   win.close();
 }
-
 
