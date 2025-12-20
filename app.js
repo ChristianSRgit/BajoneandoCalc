@@ -347,10 +347,11 @@ function imprimirTicket() {
       <style>
         body {
           font-family: monospace;
-          font-size: 12px;
+          font-size: 36px;
           margin: 0;
           padding: 10px;
-          width: 80mm;
+          width: 150mm;
+          height: auto;
         }
         .center { text-align: center; }
         .line { border-top: 1px dashed #000; margin: 6px 0; }
@@ -426,10 +427,11 @@ function reimprimirTicket(ticket) {
       <style>
         body {
           font-family: monospace;
-          font-size: 12px;
+          font-size: 36px;
           margin: 0;
           padding: 10px;
-          width: 80mm;
+          width: 150mm;
+          height: auto;
         }
         .center { text-align: center; }
         .line { border-top: 1px dashed #000; margin: 6px 0; }
@@ -469,7 +471,7 @@ function reimprimirTicket(ticket) {
     </html>
   `;
 
-  const win = window.open('', 'PRINT', 'height=600,width=400');
+  const win = window.open('', 'PRINT', 'height=400,width=400');
   win.document.write(html);
   win.document.close();
   win.focus();
