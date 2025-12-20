@@ -347,9 +347,9 @@ function imprimirTicket() {
       <style>
         body {
           font-family: monospace;
-          font-size: 36px;
+          font-size: 30px;
           margin: 0;
-          padding: 10px;
+          padding: 0px;
           width: 150mm;
           height: auto;
         }
@@ -427,9 +427,9 @@ function reimprimirTicket(ticket) {
       <style>
         body {
           font-family: monospace;
-          font-size: 36px;
+          font-size: 30px;
           margin: 0;
-          padding: 10px;
+          padding: 0px;
           width: 150mm;
           height: auto;
         }
