@@ -144,12 +144,14 @@
 </button>
 
   </div>
-
-  <input id="precioManual" type="number" placeholder="Ingresá precio manual" />
-  <input id="numeroPedido" type="number" placeholder="Últimos 4 dígitos WhatsApp"/>
   <div class="notas">
-    <input id="notaTexto" type="text" placeholder="Nota para la hamburguesa / combo (ej: sin cebolla)"/>
-  <button id="btnAgregarNota" class="ghost">Agregar nota</button>
+    <input id="precioManual" type="number" placeholder="Ingresá precio manual" />
+    <input id="numeroPedido" type="number" placeholder="Últimos 4 dígitos WhatsApp"/>
+  </div>
+
+  <div class="notas">
+      <input id="notaTexto" type="text" placeholder="Nota para la hamburguesa / combo (ej: sin cebolla)"/>
+      <button id="btnAgregarNota" class="ghost">Agregar nota</button>
   </div>
 
 
@@ -161,6 +163,13 @@
 
 
   <div class="lista" id="lista"></div>
+
+  <div class="medio-pago notas">
+  <label><input type="radio" name="medioPago" value="efectivo" checked>Efectivo</label>
+
+  <label><input type="radio" name="medioPago" value="transferencia">Transferencia</label>
+</div>
+
 
   <div class="actions">
     <button id="btnBorrarUltimo" class="ghost">Borrar último</button>

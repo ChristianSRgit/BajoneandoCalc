@@ -134,6 +134,15 @@ function agregarItemSimple(item) {
   hamburguesaActiva = null;
 }
 
+function obtenerMedioPago() {
+  const seleccionado = document.querySelector(
+    'input[name="medioPago"]:checked'
+  );
+
+  return seleccionado ? seleccionado.value : 'efectivo';
+}
+
+
 
 // ==============================
 // ACCIONES
@@ -340,6 +349,7 @@ function obtenerNumeroPedido() {
 
 function construirTicket(numeroPedido) {
   const { fecha, hora } = obtenerFechaHora();
+  const medioPago = obtenerMedioPago();
 
   let total = 0;
 
@@ -356,11 +366,13 @@ function construirTicket(numeroPedido) {
     id: numeroPedido,
     fecha,
     hora,
-    items: JSON.parse(JSON.stringify(pedido)), // snapshot
+    medioPago,
+    items: JSON.parse(JSON.stringify(pedido)),
     total,
     totalConDescuento: Math.round(total * 0.9)
   };
 }
+
 
 function guardarTicket(ticket) {
   const historial = obtenerHistorial();
@@ -412,7 +424,8 @@ function imprimirTicket() {
       <div class="center header">
         <strong>SMASH</strong><br>
         Pedido #${numeroPedido}<br>
-        ${fecha} ${hora}
+        ${fecha} ${hora}<br>
+        <strong>${obtenerMedioPago().toUpperCase()}</strong>
       </div>
 
       <div class="line"></div>
@@ -475,7 +488,9 @@ function imprimirTicket() {
     
     // Reset estado
 vaciarPedido();
-document.getElementById('numeroPedido').value = '';
+  document.getElementById('numeroPedido').value = '';
+  document.querySelector('input[value="efectivo"]').checked = true;
+
 
 }
 
@@ -504,7 +519,8 @@ function reimprimirTicket(ticket) {
       <div class="center">
         <strong>SMASH</strong><br>
         Pedido #${ticket.id}<br>
-        ${ticket.fecha} ${ticket.hora}
+        ${ticket.fecha} ${ticket.hora}<br>
+        <strong>${ticket.medioPago.toUpperCase()}</strong>
       </div>
 
       <div class="line"></div>
