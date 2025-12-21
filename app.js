@@ -4,6 +4,8 @@
 
 let pedido = [];
 let hamburguesaActiva = null;
+let itemActivoParaNotas = null;
+
 
 // ==============================
 // INICIALIZACIÓN
@@ -55,6 +57,10 @@ function bindAcciones() {
 
   document.getElementById('btnCerrarHistorial')
     .addEventListener('click', cerrarHistorial);
+  
+  document.getElementById('btnAgregarNota')
+  .addEventListener('click', agregarNota);
+
 
 }
 
@@ -87,11 +93,13 @@ function agregarHamburguesa(item) {
     tipo: 'hamburguesa',
     nombre: item.nombre,
     precio: item.precio,
-    extras: []
+    extras: [],
+    notas: [] 
   };
 
   pedido.push(nueva);
   hamburguesaActiva = nueva;
+  itemActivoParaNotas = nueva;
 }
 
 function manejarExtra(item) {
@@ -109,15 +117,23 @@ function manejarExtra(item) {
 }
 
 function agregarItemSimple(item) {
-  pedido.push({
+  const nuevo = {
     tipo: item.tipo,
     nombre: item.nombre,
     precio: item.precio
-  });
+  };
 
-  // Cierra cualquier contexto de hamburguesa
+  if (item.tipo === 'promo') {
+    nuevo.notas = [];
+    itemActivoParaNotas = nuevo;
+  } else {
+    itemActivoParaNotas = null;
+  }
+
+  pedido.push(nuevo);
   hamburguesaActiva = null;
 }
+
 
 // ==============================
 // ACCIONES
@@ -172,6 +188,22 @@ function cerrarHistorial() {
   document.getElementById('historialPanel').classList.add('cerrado');
 }
 
+function agregarNota() {
+  const input = document.getElementById('notaTexto');
+  const texto = input.value.trim();
+
+  if (!texto) return;
+
+  if (!itemActivoParaNotas) {
+    alert('No hay un ítem activo para agregar la nota');
+    return;
+  }
+
+  itemActivoParaNotas.notas.push(texto);
+  input.value = '';
+  render();
+}
+
 
 // ==============================
 // CÁLCULOS
@@ -220,10 +252,24 @@ function render() {
         total += extra.precio;
       });
 
+    if (item.notas && item.notas.length) {
+      item.notas.forEach(nota => {
+        html += `&nbsp;&nbsp;* ${nota}<br>`;
+      });
+}
+
+
     } else {
-      html += `${item.nombre} — $${item.precio.toLocaleString()}<br>`;
-      total += item.precio;
+            html += `<strong>${item.nombre}</strong> — $${item.precio.toLocaleString()}<br>`;
+            total += item.precio;
+
+      if (item.notas && item.notas.length) {
+        item.notas.forEach(nota => {
+          html += `&nbsp;&nbsp;* ${nota}<br>`;
+        });
+      }
     }
+
   });
 
   const descuento = Math.round(total * 0.9);
@@ -385,10 +431,24 @@ function imprimirTicket() {
         total += extra.precio;
       });
 
+    if (item.notas && item.notas.length) {
+      item.notas.forEach(nota => {
+      html += `<div class="extra">* ${nota}</div>`;
+  });
+}
+
+
     } else {
-      html += `<div class="item">${item.nombre}</div>`;
-      total += item.precio;
-    }
+            html += `<div class="item">${item.nombre}</div>`;
+            total += item.precio;
+
+        if (item.notas && item.notas.length) {
+        item.notas.forEach(nota => {
+        html += `<div class="extra">* ${nota}</div>`;
+        });
+  }
+}
+
   });
 
   const final = Math.round(total * 0.9);
@@ -456,6 +516,12 @@ function reimprimirTicket(ticket) {
       item.extras.forEach(extra => {
         html += `<div class="extra">+ ${extra.nombre}</div>`;
       });
+    if (item.notas && item.notas.length) {
+      item.notas.forEach(nota => {
+        html += `<div class="extra">* ${nota}</div>`;
+  });
+}
+
     } else {
       html += `<div class="item">${item.nombre}</div>`;
     }
