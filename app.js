@@ -1,4 +1,40 @@
 // ==============================
+// Productos válidos para Sheets
+// ==============================
+
+const PRODUCTOS_VALIDOS_SHEETS = [ //VERIFICAR CON LOS NOMBRES EN HTML CADA BURGA Y EXTRA, SI NO SE CARGAN BIEN, VA A DAR ERROR
+  "Cuarto smash simple",
+  "Cuarto smash doble",
+  "Big smash simple",
+  "Big smash doble",
+  "cheddar simple",
+  "Cheddar doble smash",
+  "Cheddar triple smash",
+  "Doble Cheddar Bacon",
+  "Papas noisette x100gr",
+  "Doble papas noicette",
+  "Galaxia de papas 500gr",
+  "Cancelado por PEYA",
+  "Promo 2 cuarto smash simple",
+  "Promo 2 big smash doble",
+  "Promo 2 big smash Simple",
+  "Promo 2 Doble Cheddar Bacon",
+  "Oreo Smash",
+  "Coca Lata 354ml",
+  "Extra cheddar",
+  "Extra Medallon",
+  "Extra bacon",
+  "Promo 3 cheddar simple",
+  "Dip Mayonesa",
+  "Dip Ketchup",
+  "Dip Mostaza",
+  "Extra Salsa tasty",
+  "Extra papas",
+  "Coca 600ml"
+];
+
+
+// ==============================
 // ESTADO GLOBAL DEL PEDIDO
 // ==============================
 
@@ -495,6 +531,7 @@ function imprimirTicket() {
 
       <div class="line"></div>
       <div class="center">Gracias</div>
+      <img src="../smash.png" class="ticket-img" alt="SMASH">
     </body>
     </html>
   `;

@@ -191,6 +191,12 @@
   opacity: 0.8;
 }
 
+.ticket-img {
+  display: block;
+  margin: 10px auto 0 auto;
+  max-width: 80%;
+}
+
 .btn-historial {
   position: fixed;
   top: 50%;
