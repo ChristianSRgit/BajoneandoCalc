@@ -30,8 +30,9 @@ function bindBotones() {
       const rol = btn.dataset.rol || null;
       const nombre = btn.dataset.nombre;
       const precio = Number(btn.dataset.precio);
+      const cantidadHamburguesas = Number(btn.dataset.hamburguesas || 0);
 
-      agregarItem({ tipo, rol, nombre, precio });
+      agregarItem({ tipo, rol, nombre, precio, cantidadHamburguesas });
     });
   });
 }
@@ -84,18 +85,20 @@ function agregarItem(item) {
       agregarItemSimple(item);
       break;
   }
-
+  contarHamburguesasPedido(); // 👈 DEBUG
   render();
 }
 
 function agregarHamburguesa(item) {
   const nueva = {
-    tipo: 'hamburguesa',
-    nombre: item.nombre,
-    precio: item.precio,
-    extras: [],
-    notas: [] 
-  };
+  tipo: 'hamburguesa',
+  nombre: item.nombre,
+  precio: item.precio,
+  cantidadHamburguesas: 1,
+  extras: [],
+  notas: []
+};
+
 
   pedido.push(nueva);
   hamburguesaActiva = nueva;
@@ -120,7 +123,8 @@ function agregarItemSimple(item) {
   const nuevo = {
     tipo: item.tipo,
     nombre: item.nombre,
-    precio: item.precio
+    precio: item.precio,
+    cantidadHamburguesas: item.cantidadHamburguesas || 0
   };
 
   if (item.tipo === 'promo') {
@@ -213,6 +217,24 @@ function agregarNota() {
   render();
 }
 
+function contarHamburguesasPedido() {
+  const total = pedido.reduce((acc, item) => {
+    return acc + (item.cantidadHamburguesas || 0);
+  }, 0);
+
+  console.group('🍔 Conteo de hamburguesas');
+  pedido.forEach((item, index) => {
+    console.log(
+      `${index + 1}. ${item.nombre}`,
+      '→',
+      item.cantidadHamburguesas || 0
+    );
+  });
+  console.log('TOTAL HAMBURGUESAS:', total);
+  console.groupEnd();
+
+  return total;
+}
 
 // ==============================
 // CÁLCULOS
