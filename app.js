@@ -272,6 +272,59 @@ function contarHamburguesasPedido() {
   return total;
 }
 
+function construirPayloadVenta() {
+  const numeroPedido = obtenerNumeroPedido();
+  if (!numeroPedido) return null;
+
+  const fecha = new Date();
+  const fechaISO = fecha.toISOString().split('T')[0];
+
+  const productos = pedido
+    .filter(item => PRODUCTOS_VALIDOS_SHEETS.includes(item.nombre))
+    .map(item => item.nombre)
+    .join(', ');
+
+  const cantidadHamburguesas = contarHamburguesasPedido();
+
+  const total = pedido.reduce((acc, item) => {
+    acc += item.precio;
+    if (item.extras) {
+      item.extras.forEach(e => acc += e.precio);
+    }
+    return acc;
+  }, 0);
+
+  const totalConDescuento = Math.round(total * 0.9);
+
+  const medioPago = obtenerMedioPago();
+
+  const payload = {
+    id: numeroPedido,
+    fechaISO,
+    canal: 'WhatsApp',
+    cantidadHamburguesas,
+    productos,
+    total,
+    totalConDescuento,
+    medioPago
+  };
+
+  console.group('📦 Payload venta');
+  console.log(payload);
+  console.groupEnd();
+
+  return payload;
+}
+
+function obtenerMedioPago() {
+  const seleccionado = document.querySelector(
+    'input[name="medioPago"]:checked'
+  );
+
+  return seleccionado ? seleccionado.value : 'efectivo';
+}
+
+
 // ==============================
 // CÁLCULOS
 // ==============================
@@ -542,6 +595,7 @@ function imprimirTicket() {
   win.document.write(html);
   win.document.close();
   win.focus();
+  const payloadVenta = construirPayloadVenta();
   win.print();
   win.close();
     
