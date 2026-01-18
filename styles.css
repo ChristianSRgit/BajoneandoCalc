@@ -36,6 +36,11 @@
       --accent:#4caf50;
       color:rgb(0, 0, 0)
     }
+
+    .bebida{
+      background-color:#03a9f4;
+      color:rgb(0, 0, 0);
+    }
     span.muted{
       font-size:16px;
       color:rgba(0, 0, 0, 0.7);
