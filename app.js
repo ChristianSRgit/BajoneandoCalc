@@ -115,6 +115,9 @@ function agregarItem(item) {
     case 'extra':
       manejarExtra(item);
       break;
+    case 'chicken':
+      agregarItemSimple(item);
+      break;
 
     case 'promo':
     case 'papa':
@@ -223,6 +226,7 @@ function borrarUltimo() {
 }
 
 function vaciarPedido() {
+  document.getElementById('numeroPedido').value = '';
   pedido = [];
   hamburguesaActiva = null;
   render();
@@ -600,7 +604,8 @@ function imprimirTicket() {
   win.close();
     
     // Reset estado
-vaciarPedido();
+  vaciarPedido();
+  
   document.getElementById('numeroPedido').value = '';
   document.querySelector('input[value="efectivo"]').checked = true;
 
