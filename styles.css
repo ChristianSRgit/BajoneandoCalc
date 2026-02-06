@@ -42,7 +42,7 @@
       color:rgb(0, 0, 0);
     }
     span.muted{
-      font-size:16px;
+      font-size:16px; 
       color:rgba(0, 0, 0, 0.7);
       font-weight:700;
     }
@@ -50,6 +50,8 @@
     .PROMO{background:#555;color:rgb(0, 0, 0)}
     .papa{background:#ee4d31;color:rgb(0, 0, 0)}
     .extra{background:#605ed4;color:rgb(0, 0, 0)}
+    .chicken{background:#fdd835;color:rgb(0, 0, 0)}
+    .chickenDip{background:#9a33a1;color:rgb(0, 0, 0)}
     .ghost{
       background:transparent;
       border:1px solid #555;
