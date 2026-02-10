@@ -33,6 +33,8 @@ const PRODUCTOS_VALIDOS_SHEETS = [ //VERIFICAR CON LOS NOMBRES EN HTML CADA BURG
   "Coca 600ml"
 ];
 
+const SHEETS_WEBHOOK_STORAGE_KEY = 'sheetsWebhookUrl';
+
 
 // ==============================
 // ESTADO GLOBAL DEL PEDIDO
@@ -50,6 +52,7 @@ let itemActivoParaNotas = null;
 document.addEventListener('DOMContentLoaded', () => {
   bindBotones();
   bindAcciones();
+  inicializarConfigSheets();
   render();
 });
 
@@ -98,8 +101,101 @@ function bindAcciones() {
   document.getElementById('btnAgregarNota')
   .addEventListener('click', agregarNota);
 
-
+  document.getElementById('btnGuardarSheets')
+    .addEventListener('click', guardarConfigSheets);
 }
+
+function inicializarConfigSheets() {
+  const input = document.getElementById('sheetsWebhookUrl');
+  const webhookGuardado = localStorage.getItem(SHEETS_WEBHOOK_STORAGE_KEY) || '';
+
+  input.value = webhookGuardado;
+  actualizarEstadoSheets(
+    webhookGuardado
+      ? 'Google Sheets conectado'
+      : 'Google Sheets desactivado',
+    webhookGuardado ? 'ok' : null
+  );
+}
+
+function guardarConfigSheets() {
+  const input = document.getElementById('sheetsWebhookUrl');
+  const url = input.value.trim();
+
+  if (!url) {
+    localStorage.removeItem(SHEETS_WEBHOOK_STORAGE_KEY);
+    actualizarEstadoSheets('Google Sheets desactivado');
+    return;
+  }
+
+  if (!esUrlValida(url)) {
+    actualizarEstadoSheets('URL inválida de Google Sheets', 'error');
+    return;
+  }
+
+  localStorage.setItem(SHEETS_WEBHOOK_STORAGE_KEY, url);
+  actualizarEstadoSheets('Google Sheets conectado', 'ok');
+}
+
+function actualizarEstadoSheets(mensaje, estado = null) {
+  const estadoEl = document.getElementById('sheetsEstado');
+  estadoEl.innerText = mensaje;
+  estadoEl.classList.remove('ok', 'error');
+
+  if (estado) {
+    estadoEl.classList.add(estado);
+  }
+}
+
+function esUrlValida(url) {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'https:';
+  } catch (error) {
+    return false;
+  }
+}
+
+async function enviarVentaASheets(payload) {
+  const webhookUrl = localStorage.getItem(SHEETS_WEBHOOK_STORAGE_KEY);
+
+  if (!webhookUrl) {
+    return { ok: false, skipped: true, reason: 'no-config' };
+  }
+
+  if (!esUrlValida(webhookUrl)) {
+    actualizarEstadoSheets('La URL guardada para Sheets es inválida', 'error');
+    return { ok: false, skipped: true, reason: 'invalid-config' };
+  }
+
+  const timeoutController = new AbortController();
+  const timeoutId = setTimeout(() => timeoutController.abort(), 8000);
+
+  try {
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload),
+      signal: timeoutController.signal
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    actualizarEstadoSheets('Venta guardada en Google Sheets', 'ok');
+    return { ok: true };
+  } catch (error) {
+    console.error('No se pudo enviar la venta a Google Sheets', error);
+    actualizarEstadoSheets('Error al guardar en Google Sheets', 'error');
+    return { ok: false, skipped: false, reason: 'request-error' };
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 
 // ==============================
 // LÓGICA DE NEGOCIO
@@ -284,8 +380,23 @@ function construirPayloadVenta() {
   const fechaISO = fecha.toISOString().split('T')[0];
 
   const productos = pedido
-    .filter(item => PRODUCTOS_VALIDOS_SHEETS.includes(item.nombre))
-    .map(item => item.nombre)
+    .flatMap(item => {
+      const nombres = [];
+
+      if (PRODUCTOS_VALIDOS_SHEETS.includes(item.nombre)) {
+        nombres.push(item.nombre);
+      }
+
+      if (Array.isArray(item.extras)) {
+        item.extras.forEach(extra => {
+          if (PRODUCTOS_VALIDOS_SHEETS.includes(extra.nombre)) {
+            nombres.push(extra.nombre);
+          }
+        });
+      }
+
+      return nombres;
+    })
     .join(', ');
 
   const cantidadHamburguesas = contarHamburguesasPedido();
@@ -319,15 +430,6 @@ function construirPayloadVenta() {
 
   return payload;
 }
-
-function obtenerMedioPago() {
-  const seleccionado = document.querySelector(
-    'input[name="medioPago"]:checked'
-  );
-
-  return seleccionado ? seleccionado.value : 'efectivo';
-}
-
 
 // ==============================
 // CÁLCULOS
@@ -502,7 +604,7 @@ function obtenerHistorial() {
 // ==============================
 // IMPRESIÓN DE TICKET
 // ==============================
-function imprimirTicket() {
+async function imprimirTicket() {
   if (pedido.length === 0) return;
 
   const numeroPedido = obtenerNumeroPedido();
@@ -600,6 +702,11 @@ function imprimirTicket() {
   win.document.close();
   win.focus();
   const payloadVenta = construirPayloadVenta();
+
+  if (payloadVenta) {
+    await enviarVentaASheets(payloadVenta);
+  }
+
   win.print();
   win.close();
     
