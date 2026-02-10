@@ -303,14 +303,14 @@ function construirPayloadVenta() {
   const medioPago = obtenerMedioPago();
 
   const payload = {
-    id: numeroPedido,
-    fechaISO,
+    nroPedido: numeroPedido,
+    fecha: fechaISO,
     canal: 'WhatsApp',
     cantidadHamburguesas,
     productos,
-    total,
-    totalConDescuento,
-    medioPago
+    montoBruto: total,
+    montoNeto: totalConDescuento,
+    metodoDePago: medioPago
   };
 
   console.group('📦 Payload venta');
@@ -318,6 +318,28 @@ function construirPayloadVenta() {
   console.groupEnd();
 
   return payload;
+}
+
+async function enviarVentaASheets(payloadVenta) {
+  if (!payloadVenta) return;
+
+  try {
+    const response = await fetch('/.netlify/functions/registrar-venta', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payloadVenta)
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error al registrar venta (${response.status})`);
+    }
+
+    console.log('✅ Venta enviada a Google Sheets');
+  } catch (error) {
+    console.error('❌ No se pudo enviar la venta a Sheets', error);
+  }
 }
 
 function obtenerMedioPago() {
@@ -502,7 +524,7 @@ function obtenerHistorial() {
 // ==============================
 // IMPRESIÓN DE TICKET
 // ==============================
-function imprimirTicket() {
+async function imprimirTicket() {
   if (pedido.length === 0) return;
 
   const numeroPedido = obtenerNumeroPedido();
@@ -600,6 +622,7 @@ function imprimirTicket() {
   win.document.close();
   win.focus();
   const payloadVenta = construirPayloadVenta();
+  await enviarVentaASheets(payloadVenta);
   win.print();
   win.close();
     
@@ -678,4 +701,3 @@ function reimprimirTicket(ticket) {
   win.print();
   win.close();
 }
-
