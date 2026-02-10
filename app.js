@@ -372,12 +372,17 @@ function contarHamburguesasPedido() {
   return total;
 }
 
-function construirPayloadVenta() {
-  const numeroPedido = obtenerNumeroPedido();
-  if (!numeroPedido) return null;
+function obtenerFechaHoraISO() {
+  const now = new Date();
+  return {
+    fechaISO: now.toISOString().split('T')[0],
+    fechaHoraISO: now.toISOString()
+  };
+}
 
-  const fecha = new Date();
-  const fechaISO = fecha.toISOString().split('T')[0];
+function generarListaProductosPedido() {
+  return pedido.flatMap(item => {
+    const nombres = [];
 
   const productos = pedido
     .flatMap(item => {
@@ -399,29 +404,62 @@ function construirPayloadVenta() {
     })
     .join(', ');
 
-  const cantidadHamburguesas = contarHamburguesasPedido();
+    if (Array.isArray(item.extras)) {
+      item.extras.forEach(extra => {
+        if (PRODUCTOS_VALIDOS_SHEETS.includes(extra.nombre)) {
+          nombres.push(extra.nombre);
+        }
+      });
+    }
 
-  const total = pedido.reduce((acc, item) => {
+    return nombres;
+  });
+}
+
+function calcularTotalPedido() {
+  return pedido.reduce((acc, item) => {
     acc += item.precio;
     if (item.extras) {
       item.extras.forEach(e => acc += e.precio);
     }
     return acc;
   }, 0);
+}
 
+function construirPayloadVenta(esPrueba = false) {
+  const numeroPedido = esPrueba
+    ? `TEST-${Date.now().toString().slice(-6)}`
+    : obtenerNumeroPedido();
+
+  if (!numeroPedido) return null;
+
+  const { fechaISO, fechaHoraISO } = obtenerFechaHoraISO();
+  const productosArray = generarListaProductosPedido();
+  const productos = productosArray.join(', ');
+  const cantidadHamburguesas = contarHamburguesasPedido();
+  const total = calcularTotalPedido();
   const totalConDescuento = Math.round(total * 0.9);
-
   const medioPago = obtenerMedioPago();
 
   const payload = {
     id: numeroPedido,
+    pedidoId: numeroPedido,
+    numeroPedido,
     fechaISO,
-    canal: 'WhatsApp',
+    fechaHoraISO,
+    canal: esPrueba ? 'TEST' : 'WhatsApp',
+    canalVenta: esPrueba ? 'TEST' : 'WhatsApp',
     cantidadHamburguesas,
+    hamburguesas: cantidadHamburguesas,
     productos,
+    productosTexto: productos,
+    productosArray,
     total,
+    subtotal: total,
     totalConDescuento,
-    medioPago
+    montoFinal: totalConDescuento,
+    medioPago,
+    items: JSON.parse(JSON.stringify(pedido))
   };
 
   console.group('📦 Payload venta');
