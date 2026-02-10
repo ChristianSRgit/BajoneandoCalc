@@ -13,6 +13,15 @@
 <body>
   <h2>SMASH - Calculadora 10% OFF</h2>
 
+  <div id="authOverlay" class="auth-overlay hidden">
+    <div class="auth-card">
+      <h3>Acceso restringido</h3>
+      <input id="passwordInput" type="password" placeholder="Contraseña" />
+      <button id="btnLogin" class="ghost">Ingresar</button>
+      <div id="authMessage" class="muted"></div>
+    </div>
+  </div>
+
   <div id="botones">
 
     <!-- HAMBURGUESAS -->
@@ -227,6 +236,13 @@
   <div class="notas">
     <input id="precioManual" type="number" placeholder="Ingresá precio manual" />
     <input id="numeroPedido" type="number" placeholder="Últimos 4 dígitos WhatsApp"/>
+  </div>
+
+  <div class="sheets-config">
+    <button id="btnProbarSheets" class="ghost">Probar envío a Sheets</button>
+  </div>
+  <div id="sheetsEstado" class="sheets-estado muted">
+    Conexión a Sheets gestionada por backend
   </div>
 
   <div class="notas">
