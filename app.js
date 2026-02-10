@@ -103,9 +103,6 @@ function bindAcciones() {
 
   document.getElementById('btnGuardarSheets')
     .addEventListener('click', guardarConfigSheets);
-
-  document.getElementById('btnProbarSheets')
-    .addEventListener('click', probarEnvioSheets);
 }
 
 function inicializarConfigSheets() {
@@ -184,38 +181,19 @@ async function enviarVentaASheets(payload) {
       signal: timeoutController.signal
     });
 
-    const responseText = await response.text();
-
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status} - ${responseText}`);
+      throw new Error(`HTTP ${response.status}`);
     }
 
     actualizarEstadoSheets('Venta guardada en Google Sheets', 'ok');
-    return { ok: true, responseText };
+    return { ok: true };
   } catch (error) {
     console.error('No se pudo enviar la venta a Google Sheets', error);
     actualizarEstadoSheets('Error al guardar en Google Sheets', 'error');
-    return { ok: false, skipped: false, reason: 'request-error', error: String(error) };
+    return { ok: false, skipped: false, reason: 'request-error' };
   } finally {
     clearTimeout(timeoutId);
   }
-}
-
-async function probarEnvioSheets() {
-  const payloadPrueba = construirPayloadVenta(true);
-  const resultado = await enviarVentaASheets(payloadPrueba);
-
-  if (resultado.ok) {
-    alert('Prueba enviada a Google Sheets correctamente');
-    return;
-  }
-
-  if (resultado.reason === 'no-config') {
-    alert('Primero configurá y guardá la URL del webhook');
-    return;
-  }
-
-  alert('Falló la prueba de envío. Revisá el estado en pantalla y la consola.');
 }
 
 
@@ -406,9 +384,25 @@ function generarListaProductosPedido() {
   return pedido.flatMap(item => {
     const nombres = [];
 
-    if (PRODUCTOS_VALIDOS_SHEETS.includes(item.nombre)) {
-      nombres.push(item.nombre);
-    }
+  const productos = pedido
+    .flatMap(item => {
+      const nombres = [];
+
+      if (PRODUCTOS_VALIDOS_SHEETS.includes(item.nombre)) {
+        nombres.push(item.nombre);
+      }
+
+      if (Array.isArray(item.extras)) {
+        item.extras.forEach(extra => {
+          if (PRODUCTOS_VALIDOS_SHEETS.includes(extra.nombre)) {
+            nombres.push(extra.nombre);
+          }
+        });
+      }
+
+      return nombres;
+    })
+    .join(', ');
 
     if (Array.isArray(item.extras)) {
       item.extras.forEach(extra => {
