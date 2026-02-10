@@ -329,7 +329,7 @@ async function enviarVentaASheets(payloadVenta) {
   if (!payloadVenta) return;
 
   try {
-    const response = await fetch('/.netlify/functions/registrar-venta', {
+    const response = await fetch(obtenerUrlRegistrarVenta(), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -355,10 +355,27 @@ async function enviarVentaASheets(payloadVenta) {
   return seleccionado ? seleccionado.value : 'efectivo';
 } */
 
+function obtenerUrlRegistrarVenta() {
+  const configuredUrl = window.localStorage.getItem('registrarVentaUrl');
+  if (configuredUrl) return configuredUrl;
+
+  const host = window.location.hostname;
+  const isLiveServerLocal =
+    host === '127.0.0.1' || host === 'localhost'
+      ? window.location.port === '5500'
+      : false;
+
+  if (isLiveServerLocal) {
+    return 'http://localhost:8888/.netlify/functions/registrar-venta';
+  }
+
+  return '/.netlify/functions/registrar-venta';
+}
 
 // ==============================
 // CÁLCULOS
 // ==============================
+
 
 function calcularParticular() {
   const input = document.getElementById('precioManual');

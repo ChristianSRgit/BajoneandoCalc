@@ -9,7 +9,6 @@ Esta versión envía cada venta a una Netlify Function que luego reenvía los da
 Configurar en **Site configuration → Environment variables**:
 
 - `GOOGLE_SCRIPT_URL` → URL del Web App de Apps Script.
-  - Valor sugerido: `https://script.google.com/macros/s/AKfycbyiaRHGd2o7-5emAf79RqwnFVjAouKN0jA8T9utgVnsQ2G5I7jsL9YAQ7DVeEFY_c_grw/exec`
 - `GOOGLE_SCRIPT_TOKEN` → (opcional) token/contraseña para validar origen en Apps Script.
 
 ### Formato enviado
@@ -44,10 +43,7 @@ npm i -g netlify-cli
 
 Creá un archivo `.env` en la raíz del proyecto con:
 
-```bash
-GOOGLE_SCRIPT_URL=https://script.google.com/macros/s/AKfycbyiaRHGd2o7-5emAf79RqwnFVjAouKN0jA8T9utgVnsQ2G5I7jsL9YAQ7DVeEFY_c_grw/exec
-GOOGLE_SCRIPT_TOKEN=tu_token_opcional
-```
+
 
 > Si tu Apps Script no valida token, podés omitir `GOOGLE_SCRIPT_TOKEN`.
 

@@ -1,7 +1,22 @@
 exports.handler = async (event) => {
+    const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS'
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 204,
+      headers: corsHeaders,
+      body: ''
+    };
+  }
+
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
+      headers: corsHeaders,
       body: JSON.stringify({ error: 'Método no permitido' })
     };
   }
@@ -32,10 +47,12 @@ exports.handler = async (event) => {
     }
 
     const scriptUrl = process.env.GOOGLE_SCRIPT_URL;
+    const secretToken = process.env.GOOGLE_SCRIPT_TOKEN;
 
     if (!scriptUrl) {
       return {
         statusCode: 500,
+        headers: corsHeaders,
         body: JSON.stringify({ error: 'Falta configurar GOOGLE_SCRIPT_URL en Netlify' })
       };
     }
@@ -56,6 +73,7 @@ exports.handler = async (event) => {
     if (!response.ok) {
       return {
         statusCode: response.status,
+        headers: corsHeaders,
         body: JSON.stringify({
           error: 'Google Script devolvió error',
           detail: responseText
@@ -65,6 +83,7 @@ exports.handler = async (event) => {
 
     return {
       statusCode: 200,
+      headers: corsHeaders,
       body: JSON.stringify({ ok: true, detail: responseText })
     };
   } catch (error) {
