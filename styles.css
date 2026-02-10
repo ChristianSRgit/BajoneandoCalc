@@ -222,3 +222,26 @@
   cursor: pointer;
   z-index: 998;
 }
+
+.sheets-config {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.sheets-config input {
+  margin-bottom: 0;
+}
+
+.sheets-estado {
+  margin: 8px 0;
+  font-size: 13px;
+}
+
+.sheets-estado.ok {
+  color: #7CFC00;
+}
+
+.sheets-estado.error {
+  color: #ff7676;
+}
