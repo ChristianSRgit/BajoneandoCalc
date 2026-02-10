@@ -33,10 +33,14 @@ const PRODUCTOS_VALIDOS_SHEETS = [ //VERIFICAR CON LOS NOMBRES EN HTML CADA BURG
   "Coca 600ml"
 ];
 
+<<<<<<< codex/add-google-sheets-integration-for-tickets-e2mcu5
 const AUTH_TOKEN_STORAGE_KEY = 'authToken';
 const API_LOGIN = '/.netlify/functions/auth-login';
 const API_VALIDATE = '/.netlify/functions/auth-validate';
 const API_REGISTRAR_VENTA = '/.netlify/functions/registrar-venta';
+=======
+const SHEETS_WEBHOOK_STORAGE_KEY = 'sheetsWebhookUrl';
+>>>>>>> calc1.3Sheets
 
 
 // ==============================
@@ -503,7 +507,10 @@ function construirPayloadVenta(esPrueba = false) {
   if (!numeroPedido) return null;
 
   const { fechaISO, fechaHoraISO } = obtenerFechaHoraISO();
+<<<<<<< codex/add-google-sheets-integration-for-tickets-e2mcu5
   const fecha = new Date().toLocaleDateString('es-AR');
+=======
+>>>>>>> calc1.3Sheets
   const productosArray = generarListaProductosPedido();
   const productos = productosArray.join(', ');
   const cantidadHamburguesas = contarHamburguesasPedido();
