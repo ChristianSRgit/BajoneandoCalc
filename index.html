@@ -229,6 +229,15 @@
     <input id="numeroPedido" type="number" placeholder="Últimos 4 dígitos WhatsApp"/>
   </div>
 
+  <div class="sheets-config">
+    <input id="sheetsWebhookUrl" type="url" placeholder="Webhook Google Sheets (Apps Script)" />
+    <button id="btnGuardarSheets" class="ghost">Guardar Sheets</button>
+    <button id="btnProbarSheets" class="ghost">Probar envío</button>
+  </div>
+  <div id="sheetsEstado" class="sheets-estado muted">
+    Google Sheets desactivado
+  </div>
+
   <div class="notas">
       <input id="notaTexto" type="text" placeholder="Nota para la hamburguesa / combo (ej: sin cebolla)"/>
       <button id="btnAgregarNota" class="ghost">Agregar nota</button>
