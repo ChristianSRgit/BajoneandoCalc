@@ -13,6 +13,15 @@
 <body>
   <h2>SMASH - Calculadora 10% OFF</h2>
 
+  <div id="authOverlay" class="auth-overlay hidden">
+    <div class="auth-card">
+      <h3>Acceso restringido</h3>
+      <input id="passwordInput" type="password" placeholder="Contraseña" />
+      <button id="btnLogin" class="ghost">Ingresar</button>
+      <div id="authMessage" class="muted"></div>
+    </div>
+  </div>
+
   <div id="botones">
 
     <!-- HAMBURGUESAS -->
@@ -230,11 +239,10 @@
   </div>
 
   <div class="sheets-config">
-    <input id="sheetsWebhookUrl" type="url" placeholder="Webhook Google Sheets (Apps Script)" />
-    <button id="btnGuardarSheets" class="ghost">Guardar Sheets</button>
+    <button id="btnProbarSheets" class="ghost">Probar envío a Sheets</button>
   </div>
   <div id="sheetsEstado" class="sheets-estado muted">
-    Google Sheets desactivado
+    Conexión a Sheets gestionada por backend
   </div>
 
   <div class="notas">
