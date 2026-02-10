@@ -3,34 +3,39 @@
 // ==============================
 
 const PRODUCTOS_VALIDOS_SHEETS = [ //VERIFICAR CON LOS NOMBRES EN HTML CADA BURGA Y EXTRA, SI NO SE CARGAN BIEN, VA A DAR ERROR
-  "Cuarto smash simple",
-  "Cuarto smash doble",
-  "Big smash simple",
-  "Big smash doble",
-  "cheddar simple",
-  "Cheddar doble smash",
-  "Cheddar triple smash",
-  "Doble Cheddar Bacon",
-  "Papas noisette x100gr",
-  "Doble papas noicette",
-  "Galaxia de papas 500gr",
-  "Cancelado por PEYA",
-  "Promo 2 cuarto smash simple",
-  "Promo 2 big smash doble",
-  "Promo 2 big smash Simple",
-  "Promo 2 Doble Cheddar Bacon",
-  "Oreo Smash",
-  "Coca Lata 354ml",
+"Cuarto VEGGIE simple",
+  "Big VEGGIE simple",
+  "Cuarto VEGGIE doble",
+  "Big VEGGIE doble",
+  "Simple con queso",
+  "Cuarto simple",
+  "Big simple",
+  "Cuarto doble",
+  "Big doble",
+  "Cheddar doble",
+  "Cheddar Bacon",
+  "Cheddar triple",
+  "PROMO-2 Cuartos simples",
+  "PROMO-2 Big Dobles",
+  "PROMO-3 Simple con queso",
+  "Papas simples",
+  "Papas dobles",
+  "Papas Galaxia",
+  "Chicken POPS 10u",
+  "Chicken POPS 20u",
   "Extra cheddar",
-  "Extra Medallon",
-  "Extra bacon",
-  "Promo 3 cheddar simple",
-  "Dip Mayonesa",
-  "Dip Ketchup",
-  "Dip Mostaza",
-  "Extra Salsa tasty",
-  "Extra papas",
-  "Coca 600ml"
+  "Extra Bacon",
+  "Extra carne",
+  "Extra Sweet BBQ",
+  "Extra Honey mustard",
+  "Extra Spicy mayo",
+  "Extra tasty",
+  "Extra Ketchup",
+  "Extra Mostaza",
+  "Extra Mayonesa",
+  "Gaseosa lata Coca",
+  "Coca ZERO 600ml",
+  "Oreo smash"
 ];
 
 
@@ -342,13 +347,13 @@ async function enviarVentaASheets(payloadVenta) {
   }
 }
 
-function obtenerMedioPago() {
+/* function obtenerMedioPago() {
   const seleccionado = document.querySelector(
     'input[name="medioPago"]:checked'
   );
 
   return seleccionado ? seleccionado.value : 'efectivo';
-}
+} */
 
 
 // ==============================

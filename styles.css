@@ -86,6 +86,15 @@
       margin-top:8px;
       font-size:15px
     }
+    .resultado{
+      background:var(--card);
+      padding:12px;
+      border-radius:8px;
+      min-height:24px;
+      margin-top:8px;
+      text-align:center;
+      font-size:15px
+    }
     .total{
       margin-top:10px;
       font-weight:700
