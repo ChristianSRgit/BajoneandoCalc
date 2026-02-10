@@ -222,3 +222,57 @@
   cursor: pointer;
   z-index: 998;
 }
+
+.sheets-config {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.sheets-config button {
+  white-space: nowrap;
+}
+
+.sheets-estado {
+  margin: 8px 0;
+  font-size: 13px;
+}
+
+.sheets-estado.ok {
+  color: #7CFC00;
+}
+
+.sheets-estado.error {
+  color: #ff7676;
+}
+
+
+.auth-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+}
+
+.auth-overlay.hidden {
+  display: none;
+}
+
+.auth-card {
+  width: min(360px, 90vw);
+  background: #1e1e1e;
+  border: 1px solid #444;
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.auth-card h3 {
+  margin-top: 0;
+}
+
+.auth-card button {
+  width: 100%;
+}

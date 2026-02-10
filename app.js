@@ -33,6 +33,19 @@ const PRODUCTOS_VALIDOS_SHEETS = [ //VERIFICAR CON LOS NOMBRES EN HTML CADA BURG
   "Coca 600ml"
 ];
 
+const AUTH_TOKEN_STORAGE_KEY = 'authToken';
+const API_LOGIN = '/.netlify/functions/auth-login';
+const API_VALIDATE = '/.netlify/functions/auth-validate';
+const API_REGISTRAR_VENTA = '/.netlify/functions/registrar-venta';
+
+function byId(id) {
+  return document.getElementById(id);
+}
+
+function addClickListener(id, handler) {
+  const element = byId(id);
+  if (element) element.addEventListener('click', handler);
+}
 
 // ==============================
 // ESTADO GLOBAL DEL PEDIDO
@@ -41,17 +54,159 @@ const PRODUCTOS_VALIDOS_SHEETS = [ //VERIFICAR CON LOS NOMBRES EN HTML CADA BURG
 let pedido = [];
 let hamburguesaActiva = null;
 let itemActivoParaNotas = null;
+let appInicializada = false;
 
 
 // ==============================
 // INICIALIZACIÓN
 // ==============================
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  bindAuth();
+
+  // Si por conflictos de merge falta el overlay, no bloqueamos la app.
+  if (!byId('authOverlay')) {
+    inicializarApp();
+    return;
+  }
+
+  const autenticado = await validarSesion();
+
+  if (autenticado) {
+    ocultarLogin();
+    inicializarApp();
+  } else {
+    mostrarLogin();
+    actualizarEstadoSheets('Iniciá sesión para operar', 'error');
+  }
+});
+
+function inicializarApp() {
+  if (appInicializada) return;
+
   bindBotones();
   bindAcciones();
+  actualizarEstadoSheets('Conexión a Sheets gestionada por backend', 'ok');
   render();
-});
+
+  appInicializada = true;
+}
+
+function bindAuth() {
+  addClickListener('btnLogin', login);
+
+  const passwordInput = byId('passwordInput');
+  if (!passwordInput) return;
+
+  passwordInput.addEventListener('keydown', event => {
+    if (event.key === 'Enter') {
+      login();
+    }
+  });
+}
+
+async function login() {
+  const input = byId('passwordInput');
+  if (!input) {
+    inicializarApp();
+    return;
+  }
+
+  const password = input.value.trim();
+
+  if (!password) {
+    actualizarEstadoLogin('Ingresá una contraseña');
+    return;
+  }
+
+  try {
+    const response = await fetch(API_LOGIN, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.token) {
+      throw new Error(data.error || 'No autorizado');
+    }
+
+    localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, data.token);
+    input.value = '';
+    ocultarLogin();
+    inicializarApp();
+    actualizarEstadoSheets('Conexión a Sheets gestionada por backend', 'ok');
+  } catch (error) {
+    actualizarEstadoLogin('Contraseña incorrecta');
+    console.error('Error de login', error);
+  }
+}
+
+async function validarSesion() {
+  const token = localStorage.getItem(AUTH_TOKEN_STORAGE_KEY);
+
+  if (!token) {
+    return false;
+  }
+
+  try {
+    const response = await fetch(API_VALIDATE, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token })
+    });
+
+    if (!response.ok) {
+      localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('No se pudo validar sesión', error);
+    return false;
+  }
+}
+
+function mostrarLogin() {
+  const authOverlay = byId('authOverlay');
+  if (authOverlay) authOverlay.classList.remove('hidden');
+}
+
+function ocultarLogin() {
+  const authOverlay = byId('authOverlay');
+  if (authOverlay) authOverlay.classList.add('hidden');
+  actualizarEstadoLogin('');
+}
+
+function actualizarEstadoLogin(mensaje) {
+  const authMessage = byId('authMessage');
+  if (authMessage) authMessage.innerText = mensaje;
+}
+
+function obtenerTokenAuth() {
+  return localStorage.getItem(AUTH_TOKEN_STORAGE_KEY) || '';
+}
+
+function actualizarEstadoSheets(mensaje, estado = null) {
+  const estadoEl = byId('sheetsEstado');
+  if (!estadoEl) return;
+
+  estadoEl.innerText = mensaje;
+  estadoEl.classList.remove('ok', 'error');
+
+  if (estado) {
+    estadoEl.classList.add(estado);
+  }
+}
+
+function manejarSesionExpirada() {
+  localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
+  mostrarLogin();
+  actualizarEstadoSheets('Sesión expirada. Volvé a iniciar sesión.', 'error');
+}
+
 
 // ==============================
 // BINDINGS
@@ -74,32 +229,68 @@ function bindBotones() {
 }
 
 function bindAcciones() {
-  document.getElementById('btnAgregarManual')
-    .addEventListener('click', agregarManual);
-
-  document.getElementById('btnCalcular')
-    .addEventListener('click', calcularParticular);
-
-  document.getElementById('btnBorrarUltimo')
-    .addEventListener('click', borrarUltimo);
-
-  document.getElementById('btnVaciar')
-    .addEventListener('click', vaciarPedido);
-    
-  document.getElementById('btnImprimir')
-    .addEventListener('click', imprimirTicket);
-  
-  document.getElementById('btnAbrirHistorial')
-    .addEventListener('click', abrirHistorial);
-
-  document.getElementById('btnCerrarHistorial')
-    .addEventListener('click', cerrarHistorial);
-  
-  document.getElementById('btnAgregarNota')
-  .addEventListener('click', agregarNota);
-
-
+  addClickListener('btnAgregarManual', agregarManual);
+  addClickListener('btnCalcular', calcularParticular);
+  addClickListener('btnBorrarUltimo', borrarUltimo);
+  addClickListener('btnVaciar', vaciarPedido);
+  addClickListener('btnImprimir', imprimirTicket);
+  addClickListener('btnAbrirHistorial', abrirHistorial);
+  addClickListener('btnCerrarHistorial', cerrarHistorial);
+  addClickListener('btnAgregarNota', agregarNota);
+  addClickListener('btnProbarSheets', probarEnvioSheets);
 }
+
+async function enviarVentaASheets(payload) {
+  const token = obtenerTokenAuth();
+
+  if (!token) {
+    manejarSesionExpirada();
+    return { ok: false, reason: 'no-auth' };
+  }
+
+  try {
+    const response = await fetch(API_REGISTRAR_VENTA, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-auth-token': token
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (response.status === 401) {
+      manejarSesionExpirada();
+      return { ok: false, reason: 'unauthorized' };
+    }
+
+    if (!response.ok) {
+      const error = data.error || `HTTP ${response.status}`;
+      throw new Error(error);
+    }
+
+    actualizarEstadoSheets('Venta guardada en Google Sheets', 'ok');
+    return { ok: true };
+  } catch (error) {
+    console.error('No se pudo enviar la venta a backend', error);
+    actualizarEstadoSheets(`Error al guardar en Google Sheets: ${error.message}`, 'error');
+    return { ok: false, reason: 'request-error', error: String(error) };
+  }
+}
+
+async function probarEnvioSheets() {
+  const payloadPrueba = construirPayloadVenta(true);
+  const resultado = await enviarVentaASheets(payloadPrueba);
+
+  if (resultado.ok) {
+    alert('Prueba enviada a Google Sheets correctamente');
+    return;
+  }
+
+  alert('Falló la prueba de envío. Revisá estado y consola.');
+}
+
 
 // ==============================
 // LÓGICA DE NEGOCIO
@@ -276,41 +467,91 @@ function contarHamburguesasPedido() {
   return total;
 }
 
-function construirPayloadVenta() {
-  const numeroPedido = obtenerNumeroPedido();
-  if (!numeroPedido) return null;
+function obtenerFechaHoraISO() {
+  const now = new Date();
+  return {
+    fechaISO: now.toISOString().split('T')[0],
+    fechaHoraISO: now.toISOString()
+  };
+}
 
-  const fecha = new Date();
-  const fechaISO = fecha.toISOString().split('T')[0];
+function generarListaProductosPedido() {
+  return pedido.flatMap(item => {
+    const nombres = [];
 
-  const productos = pedido
-    .filter(item => PRODUCTOS_VALIDOS_SHEETS.includes(item.nombre))
-    .map(item => item.nombre)
-    .join(', ');
+    if (PRODUCTOS_VALIDOS_SHEETS.includes(item.nombre)) {
+      nombres.push(item.nombre);
+    }
 
-  const cantidadHamburguesas = contarHamburguesasPedido();
+    if (Array.isArray(item.extras)) {
+      item.extras.forEach(extra => {
+        if (PRODUCTOS_VALIDOS_SHEETS.includes(extra.nombre)) {
+          nombres.push(extra.nombre);
+        }
+      });
+    }
 
-  const total = pedido.reduce((acc, item) => {
+    return nombres;
+  });
+}
+
+function calcularTotalPedido() {
+  return pedido.reduce((acc, item) => {
     acc += item.precio;
     if (item.extras) {
       item.extras.forEach(e => acc += e.precio);
     }
     return acc;
   }, 0);
+}
 
+function construirPayloadVenta(esPrueba = false) {
+  const numeroPedido = esPrueba
+    ? `TEST-${Date.now().toString().slice(-6)}`
+    : obtenerNumeroPedido();
+
+  if (!numeroPedido) return null;
+
+  const { fechaISO, fechaHoraISO } = obtenerFechaHoraISO();
+  const fecha = new Date().toLocaleDateString('es-AR');
+  const productosArray = generarListaProductosPedido();
+  const productos = productosArray.join(', ');
+  const cantidadHamburguesas = contarHamburguesasPedido();
+  const total = calcularTotalPedido();
   const totalConDescuento = Math.round(total * 0.9);
-
   const medioPago = obtenerMedioPago();
+  const canalVenta = esPrueba ? 'TEST' : 'WhatsApp';
 
   const payload = {
     id: numeroPedido,
+    pedidoId: numeroPedido,
+    numeroPedido,
+    fecha,
     fechaISO,
-    canal: 'WhatsApp',
+    fechaHoraISO,
+    canal: canalVenta,
+    canalVenta,
     cantidadHamburguesas,
+    hamburguesas: cantidadHamburguesas,
     productos,
+    productosTexto: productos,
+    productosArray,
     total,
+    subtotal: total,
     totalConDescuento,
-    medioPago
+    montoFinal: totalConDescuento,
+    medioPago,
+    items: JSON.parse(JSON.stringify(pedido)),
+
+    // Claves exactas de columnas en Google Sheets
+    'Nro Pedido': numeroPedido,
+    Fecha: fecha,
+    Canal: canalVenta,
+    'Cant. Hambur': cantidadHamburguesas,
+    Productos: productos,
+    'Monto Bruto': total,
+    'Monto Neto': totalConDescuento,
+    'Metodo de Pago': medioPago
   };
 
   console.group('📦 Payload venta');
@@ -319,15 +560,6 @@ function construirPayloadVenta() {
 
   return payload;
 }
-
-function obtenerMedioPago() {
-  const seleccionado = document.querySelector(
-    'input[name="medioPago"]:checked'
-  );
-
-  return seleccionado ? seleccionado.value : 'efectivo';
-}
-
 
 // ==============================
 // CÁLCULOS
@@ -338,15 +570,19 @@ function calcularParticular() {
   const valor = Number(input.value);
 
   if (!valor || valor <= 0) {
-    document.getElementById('resultado').innerText =
-      'Ingresá un número válido';
+    const resultadoEl = byId('resultado');
+    if (resultadoEl) {
+      resultadoEl.innerText = 'Ingresá un número válido';
+    }
     return;
   }
 
   const final = Math.round(valor * 0.9);
 
-  document.getElementById('resultado').innerText =
-    `Original: $${valor.toLocaleString()} | 10% OFF: $${final.toLocaleString()}`;
+  const resultadoEl = byId('resultado');
+  if (resultadoEl) {
+    resultadoEl.innerText = `Original: $${valor.toLocaleString()} | 10% OFF: $${final.toLocaleString()}`;
+  }
 }
 
 // ==============================
@@ -355,11 +591,11 @@ function calcularParticular() {
 
 function render() {
   const lista = document.getElementById('lista');
-  const resultado = document.getElementById('resultado');
+  const resultado = byId('resultado');
 
   if (pedido.length === 0) {
     lista.innerHTML = '<div class="muted">No hay items</div>';
-    resultado.innerText = 'Original: - | 10% OFF: -';
+    if (resultado) resultado.innerText = 'Original: - | 10% OFF: -';
     return;
   }
 
@@ -408,8 +644,9 @@ function render() {
   `;
 
   lista.innerHTML = html;
-  resultado.innerText =
-    `Original: $${total.toLocaleString()} | 10% OFF: $${descuento.toLocaleString()}`;
+  if (resultado) {
+    resultado.innerText = `Original: $${total.toLocaleString()} | 10% OFF: $${descuento.toLocaleString()}`;
+  }
 }
 
 function renderHistorial() {
@@ -502,7 +739,7 @@ function obtenerHistorial() {
 // ==============================
 // IMPRESIÓN DE TICKET
 // ==============================
-function imprimirTicket() {
+async function imprimirTicket() {
   if (pedido.length === 0) return;
 
   const numeroPedido = obtenerNumeroPedido();
@@ -600,6 +837,11 @@ function imprimirTicket() {
   win.document.close();
   win.focus();
   const payloadVenta = construirPayloadVenta();
+
+  if (payloadVenta) {
+    await enviarVentaASheets(payloadVenta);
+  }
+
   win.print();
   win.close();
     
