@@ -21,7 +21,6 @@ exports.handler = async (event) => {
     ];
 
     const faltantes = requiredFields.filter((field) => venta[field] === undefined || venta[field] === null);
-
     if (faltantes.length) {
       return {
         statusCode: 400,
@@ -33,7 +32,6 @@ exports.handler = async (event) => {
     }
 
     const scriptUrl = process.env.GOOGLE_SCRIPT_URL;
-    const secretToken = process.env.GOOGLE_SCRIPT_TOKEN;
 
     if (!scriptUrl) {
       return {
