@@ -8,8 +8,7 @@ Esta versión envía cada venta a una Netlify Function que luego reenvía los da
 
 Configurar en **Site configuration → Environment variables**:
 
-- `GOOGLE_SCRIPT_URL` → URL del Web App de Apps Script.
-- `GOOGLE_SCRIPT_TOKEN` → (opcional) token/contraseña para validar origen en Apps Script.
+- `GOOGLE_SCRIPT_URL` → URL del Web App de Apps Script finalizado en /exec
 
 ### Formato enviado
 
@@ -43,9 +42,6 @@ npm i -g netlify-cli
 
 Creá un archivo `.env` en la raíz del proyecto con:
 
-
-
-> Si tu Apps Script no valida token, podés omitir `GOOGLE_SCRIPT_TOKEN`.
 
 ### 3) Levantar entorno local con functions
 

@@ -57,18 +57,21 @@ exports.handler = async (event) => {
       };
     }
 
+ const payload = {
+      token: secretToken || undefined,
+      ...venta
+    };
+
     const response = await fetch(scriptUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        token: secretToken || undefined,
-        ...venta
-      })
+      body: JSON.stringify(payload)
     });
 
     const responseText = await response.text();
+    const contentType = response.headers.get('content-type') || '';
 
     if (!response.ok) {
       return {
@@ -81,10 +84,40 @@ exports.handler = async (event) => {
       };
     }
 
+    if (contentType.includes('text/html')) {
+      return {
+        statusCode: 502,
+        headers: corsHeaders,
+        body: JSON.stringify({
+          error: 'Google Script respondió HTML en lugar de JSON',
+          hint: 'Revisá que GOOGLE_SCRIPT_URL sea la URL /exec pública del Web App y no /dev.',
+          detail: responseText.slice(0, 300)
+        })
+      };
+    }
+
+    let parsedResponse = null;
+    try {
+      parsedResponse = JSON.parse(responseText);
+    } catch (_) {
+      // Si no viene JSON, devolvemos detalle en la respuesta para debug.
+    }
+
+    if (parsedResponse && parsedResponse.ok === false) {
+      return {
+        statusCode: 502,
+        headers: corsHeaders,
+        body: JSON.stringify({
+          error: 'Google Script respondió ok=false',
+          detail: parsedResponse
+        })
+      };
+    }
+
     return {
       statusCode: 200,
       headers: corsHeaders,
-      body: JSON.stringify({ ok: true, detail: responseText })
+      body: JSON.stringify({ ok: true, detail: parsedResponse || responseText })
     };
   } catch (error) {
     return {

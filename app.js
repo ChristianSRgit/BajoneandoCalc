@@ -182,16 +182,6 @@ function agregarItemSimple(item) {
   hamburguesaActiva = null;
 }
 
-function obtenerMedioPago() {
-  const seleccionado = document.querySelector(
-    'input[name="medioPago"]:checked'
-  );
-
-  return seleccionado ? seleccionado.value : 'efectivo';
-}
-
-
-
 // ==============================
 // ACCIONES
 // ==============================
@@ -310,7 +300,7 @@ function construirPayloadVenta() {
   const payload = {
     nroPedido: numeroPedido,
     fecha: fechaISO,
-    canal: 'WhatsApp',
+    canal: 'whatsapp',
     cantidadHamburguesas,
     productos,
     montoBruto: total,
@@ -336,24 +326,26 @@ async function enviarVentaASheets(payloadVenta) {
       },
       body: JSON.stringify(payloadVenta)
     });
-
+    const result = await response.json().catch(() => null); // nuevo checkeo
     if (!response.ok) {
-      throw new Error(`Error al registrar venta (${response.status})`);
+
+      const detail = result?.detail ? ` | detalle: ${JSON.stringify(result.detail)}` : '';
+      throw new Error(`Error al registrar venta (${response.status})${detail}`);
     }
 
-    console.log('✅ Venta enviada a Google Sheets');
+    console.log('✅ Venta enviada a Google Sheets', result?.detail || 'sin detalle');
   } catch (error) {
     console.error('❌ No se pudo enviar la venta a Sheets', error);
   }
 }
 
-/* function obtenerMedioPago() {
+ function obtenerMedioPago() {
   const seleccionado = document.querySelector(
     'input[name="medioPago"]:checked'
   );
 
-  return seleccionado ? seleccionado.value : 'efectivo';
-} */
+  return seleccionado ? seleccionado.value : 'Efectivo';
+}
 
 function obtenerUrlRegistrarVenta() {
   const configuredUrl = window.localStorage.getItem('registrarVentaUrl');
@@ -652,7 +644,7 @@ async function imprimirTicket() {
   vaciarPedido();
   
   document.getElementById('numeroPedido').value = '';
-  document.querySelector('input[value="efectivo"]').checked = true;
+  document.querySelector('input[value="Efectivo"]').checked = true;
 
 
 }
