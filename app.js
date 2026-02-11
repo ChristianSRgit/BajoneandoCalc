@@ -1,3 +1,30 @@
+async function validarAccesoCalculadora() {
+  // Si ya validó en esta sesión, no pedimos de nuevo
+  if (sessionStorage.getItem('calculadora_ok') === '1') {
+    return true;
+  }
+
+  const password = prompt('Ingresá la contraseña');
+
+  if (!password) return false;
+
+  try {
+    const res = await fetch('/.netlify/functions/validar-calculadora', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password })
+    });
+
+    if (!res.ok) return false;
+
+    sessionStorage.setItem('calculadora_ok', '1');
+    return true;
+  } catch (err) {
+    console.error('Error validando acceso', err);
+    return false;
+  }
+}
+
 // ==============================
 // Productos válidos para Sheets
 // ==============================
@@ -52,11 +79,24 @@ let itemActivoParaNotas = null;
 // INICIALIZACIÓN
 // ==============================
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  const accesoOk = await validarAccesoCalculadora();
+
+  if (!accesoOk) {
+    document.body.innerHTML = `
+      <div style="padding:40px;text-align:center">
+        <h2>Acceso restringido</h2>
+      </div>
+    `;
+    return;
+  }
+
+  // 👇 solo si pasó la contraseña
   bindBotones();
   bindAcciones();
   render();
 });
+
 
 // ==============================
 // BINDINGS
@@ -276,7 +316,9 @@ function construirPayloadVenta() {
   if (!numeroPedido) return null;
 
   const fecha = new Date();
-  const fechaISO = fecha.toISOString().split('T')[0];
+  const fechaISO = new Date().toLocaleDateString('sv-SE', {
+  timeZone: 'America/Argentina/Buenos_Aires'
+});
 
   const productos = pedido
     .filter(item => PRODUCTOS_VALIDOS_SHEETS.includes(item.nombre))
@@ -480,14 +522,19 @@ function renderHistorial() {
 function obtenerFechaHora() {
   const now = new Date();
 
-  const fecha = now.toLocaleDateString('es-AR');
+  const fecha = now.toLocaleDateString('es-AR', {
+    timeZone: 'America/Argentina/Buenos_Aires'
+  });
+
   const hora = now.toLocaleTimeString('es-AR', {
+    timeZone: 'America/Argentina/Buenos_Aires',
     hour: '2-digit',
     minute: '2-digit'
   });
 
   return { fecha, hora };
 }
+
 
 function obtenerNumeroPedido() {
   const input = document.getElementById('numeroPedido');
