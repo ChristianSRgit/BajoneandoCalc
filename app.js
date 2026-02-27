@@ -272,13 +272,16 @@ function agregarDelivery() {
 }
 
 function modificarPrecioFinal() {
-  const input = document.getElementById('precioManual');
-  const valor = Number(input.value);
+  const valorIngresado = prompt('Ingresá el precio final manual');
+  if (valorIngresado === null) return;
 
-  if (!valor || valor <= 0) return;
+  const valor = Number(valorIngresado);
+  if (!valor || valor <= 0) {
+    alert('Ingresá un número válido para el precio final');
+    return;
+  }
 
   precioFinalManual = Math.round(valor);
-  input.value = '';
   render();
 }
 
