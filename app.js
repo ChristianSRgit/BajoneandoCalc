@@ -272,13 +272,16 @@ function agregarDelivery() {
 }
 
 function modificarPrecioFinal() {
-  const input = document.getElementById('precioManual');
-  const valor = Number(input.value);
+  const valorIngresado = prompt('Ingresá el precio final manual');
+  if (valorIngresado === null) return;
 
-  if (!valor || valor <= 0) return;
+  const valor = Number(valorIngresado);
+  if (!valor || valor <= 0) {
+    alert('Ingresá un número válido para el precio final');
+    return;
+  }
 
   precioFinalManual = Math.round(valor);
-  input.value = '';
   render();
 }
 
@@ -398,6 +401,7 @@ function construirPayloadVenta() {
   const cantidadHamburguesas = contarHamburguesasPedido();
 
   const { total, totalConDescuento } = calcularTotalesPedido();
+  const montoNetoFinal = precioFinalManual ?? totalConDescuento;
 
   const medioPago = obtenerMedioPago();
   const tipoEntrega = obtenerTipoEntrega();
@@ -409,7 +413,7 @@ function construirPayloadVenta() {
     cantidadHamburguesas,
     productos,
     montoBruto: total,
-    montoNeto: totalConDescuento,
+    montoNeto: montoNetoFinal,
     metodoDePago: medioPago,
     tipoEntrega
   };
