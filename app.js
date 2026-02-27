@@ -401,6 +401,7 @@ function construirPayloadVenta() {
   const cantidadHamburguesas = contarHamburguesasPedido();
 
   const { total, totalConDescuento } = calcularTotalesPedido();
+  const montoNetoFinal = precioFinalManual ?? totalConDescuento;
 
   const medioPago = obtenerMedioPago();
   const tipoEntrega = obtenerTipoEntrega();
@@ -412,7 +413,7 @@ function construirPayloadVenta() {
     cantidadHamburguesas,
     productos,
     montoBruto: total,
-    montoNeto: totalConDescuento,
+    montoNeto: montoNetoFinal,
     metodoDePago: medioPago,
     tipoEntrega
   };
