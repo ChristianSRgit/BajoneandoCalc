@@ -226,6 +226,7 @@
   </div>
   <div class="notas">
     <input id="precioManual" type="number" placeholder="Ingresá precio manual" />
+    <input id="precioDelivery" type="number" min="0" step="1" placeholder="Ingresá precio Delivery" />
     <input id="numeroPedido" type="number" placeholder="Últimos 4 dígitos WhatsApp"/>
   </div>
 
@@ -238,16 +239,22 @@
 
   <div class="controls">
     <button id="btnAgregarManual" class="ghost">Agregar precio</button>
-    <button id="btnCalcular" class="ghost">Calcular 10% OFF</button>
+    <button id="agregarDelivery" class="ghost">Agregar Delivery</button>
+    <button id="btnModificarFinal" class="ghost">Modificar precio final</button>
   </div>
 
 
   <div class="lista" id="lista"></div>
 <div id="resultado" class="resultado"></div>
-  <div class="medio-pago notas">
+<div class="medio-pago notas">
   <label><input type="radio" name="medioPago" value="Efectivo" checked>Efectivo</label>
 
   <label><input type="radio" name="medioPago" value="Online">Transferencia</label>
+</div>
+
+<div class="medio-pago notas">
+  <label><input type="radio" name="tipoEntrega" value="Pick up" checked>Pick up</label>
+  <label><input type="radio" name="tipoEntrega" value="Delivery">Delivery</label>
 </div>
 
 

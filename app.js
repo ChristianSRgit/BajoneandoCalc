@@ -73,6 +73,7 @@ const PRODUCTOS_VALIDOS_SHEETS = [ //VERIFICAR CON LOS NOMBRES EN HTML CADA BURG
 let pedido = [];
 let hamburguesaActiva = null;
 let itemActivoParaNotas = null;
+let precioFinalManual = null;
 
 
 // ==============================
@@ -122,8 +123,15 @@ function bindAcciones() {
   document.getElementById('btnAgregarManual')
     .addEventListener('click', agregarManual);
 
-  document.getElementById('btnCalcular')
-    .addEventListener('click', calcularParticular);
+  const btnModificarFinal = document.getElementById('btnModificarFinal');
+  if (btnModificarFinal) {
+    btnModificarFinal.addEventListener('click', modificarPrecioFinal);
+  }
+
+  const btnAgregarDelivery = document.getElementById('agregarDelivery');
+  if (btnAgregarDelivery) {
+    btnAgregarDelivery.addEventListener('click', agregarDelivery);
+  }
 
   document.getElementById('btnBorrarUltimo')
     .addEventListener('click', borrarUltimo);
@@ -151,6 +159,8 @@ function bindAcciones() {
 // ==============================
 
 function agregarItem(item) {
+  precioFinalManual = null;
+
   switch (item.tipo) {
 
     case 'hamburguesa':
@@ -211,12 +221,8 @@ function agregarItemSimple(item) {
     cantidadHamburguesas: item.cantidadHamburguesas || 0
   };
 
-  if (item.tipo === 'promo') {
-    nuevo.notas = [];
-    itemActivoParaNotas = nuevo;
-  } else {
-    itemActivoParaNotas = null;
-  }
+  nuevo.notas = [];
+  itemActivoParaNotas = nuevo;
 
   pedido.push(nuevo);
   hamburguesaActiva = null;
@@ -239,6 +245,39 @@ function agregarManual() {
   });
 
   hamburguesaActiva = null;
+  itemActivoParaNotas = pedido[pedido.length - 1];
+  precioFinalManual = null;
+  input.value = '';
+  render();
+}
+
+function agregarDelivery() {
+  const input = document.getElementById('precioDelivery');
+  const valor = Number(input.value);
+
+  if (!valor || valor <= 0) return;
+
+  pedido.push({
+    tipo: 'delivery',
+    nombre: 'Delivery',
+    precio: Math.round(valor),
+    notas: []
+  });
+
+  hamburguesaActiva = null;
+  itemActivoParaNotas = pedido[pedido.length - 1];
+  precioFinalManual = null;
+  input.value = '';
+  render();
+}
+
+function modificarPrecioFinal() {
+  const input = document.getElementById('precioManual');
+  const valor = Number(input.value);
+
+  if (!valor || valor <= 0) return;
+
+  precioFinalManual = Math.round(valor);
   input.value = '';
   render();
 }
@@ -247,6 +286,7 @@ function borrarUltimo() {
   if (pedido.length === 0) return;
 
   pedido.pop();
+  precioFinalManual = null;
 
   // Recalcular hamburguesa activa
   hamburguesaActiva = null;
@@ -264,6 +304,8 @@ function vaciarPedido() {
   document.getElementById('numeroPedido').value = '';
   pedido = [];
   hamburguesaActiva = null;
+  itemActivoParaNotas = null;
+  precioFinalManual = null;
   render();
 }
 
@@ -311,6 +353,34 @@ function contarHamburguesasPedido() {
   return total;
 }
 
+function calcularTotalesPedido() {
+  let total = 0;
+  let totalProductosConDescuento = 0;
+
+  pedido.forEach(item => {
+    total += item.precio;
+
+    if (item.tipo !== 'manual' && item.tipo !== 'delivery') {
+      totalProductosConDescuento += item.precio;
+    }
+
+    if (item.extras) {
+      item.extras.forEach(e => {
+        total += e.precio;
+        totalProductosConDescuento += e.precio;
+      });
+    }
+  });
+
+  const totalSinDescuento = total - totalProductosConDescuento;
+  const totalConDescuento = Math.round(totalProductosConDescuento * 0.9) + totalSinDescuento;
+
+  return {
+    total,
+    totalConDescuento
+  };
+}
+
 function construirPayloadVenta() {
   const numeroPedido = obtenerNumeroPedido();
   if (!numeroPedido) return null;
@@ -327,17 +397,10 @@ function construirPayloadVenta() {
 
   const cantidadHamburguesas = contarHamburguesasPedido();
 
-  const total = pedido.reduce((acc, item) => {
-    acc += item.precio;
-    if (item.extras) {
-      item.extras.forEach(e => acc += e.precio);
-    }
-    return acc;
-  }, 0);
-
-  const totalConDescuento = Math.round(total * 0.9);
+  const { total, totalConDescuento } = calcularTotalesPedido();
 
   const medioPago = obtenerMedioPago();
+  const tipoEntrega = obtenerTipoEntrega();
 
   const payload = {
     nroPedido: numeroPedido,
@@ -347,7 +410,8 @@ function construirPayloadVenta() {
     productos,
     montoBruto: total,
     montoNeto: totalConDescuento,
-    metodoDePago: medioPago
+    metodoDePago: medioPago,
+    tipoEntrega
   };
 
   console.group('📦 Payload venta');
@@ -387,6 +451,14 @@ async function enviarVentaASheets(payloadVenta) {
   );
 
   return seleccionado ? seleccionado.value : 'Efectivo';
+}
+
+function obtenerTipoEntrega() {
+  const seleccionado = document.querySelector(
+    'input[name="tipoEntrega"]:checked'
+  );
+
+  return seleccionado ? seleccionado.value : 'Pick up';
 }
 
 function obtenerUrlRegistrarVenta() {
@@ -437,21 +509,18 @@ function render() {
 
   if (pedido.length === 0) {
     lista.innerHTML = '<div class="muted">No hay items</div>';
-    resultado.innerText = 'Original: - | 10% OFF: -';
+    resultado.innerText = 'Original: - | Final: -';
     return;
   }
 
   let html = '';
-  let total = 0;
 
   pedido.forEach(item => {
     if (item.tipo === 'hamburguesa') {
       html += `<strong>${item.nombre}</strong> — $${item.precio.toLocaleString()}<br>`;
-      total += item.precio;
 
       item.extras.forEach(extra => {
         html += `&nbsp;&nbsp;+ ${extra.nombre} — $${extra.precio.toLocaleString()}<br>`;
-        total += extra.precio;
       });
 
     if (item.notas && item.notas.length) {
@@ -463,8 +532,7 @@ function render() {
 
     } else {
             html += `<strong>${item.nombre}</strong> — $${item.precio.toLocaleString()}<br>`;
-            total += item.precio;
-
+      
       if (item.notas && item.notas.length) {
         item.notas.forEach(nota => {
           html += `&nbsp;&nbsp;* ${nota}<br>`;
@@ -474,20 +542,21 @@ function render() {
 
   });
 
-  const descuento = Math.round(total * 0.9);
+  const { total, totalConDescuento } = calcularTotalesPedido();
+  const precioFinalMostrado = precioFinalManual ?? totalConDescuento;
 
   html += `
     <div class="total">
       Total: <strong>$${total.toLocaleString()}</strong>
     </div>
     <div class="final">
-      $${descuento.toLocaleString()} con 10% OFF
+      $${precioFinalMostrado.toLocaleString()} final
     </div>
   `;
 
   lista.innerHTML = html;
   resultado.innerText =
-    `Original: $${total.toLocaleString()} | 10% OFF: $${descuento.toLocaleString()}`;
+    `Original: $${total.toLocaleString()} | Final: $${precioFinalMostrado.toLocaleString()}`;
 }
 
 function renderHistorial() {
@@ -508,7 +577,7 @@ function renderHistorial() {
     div.innerHTML = `
       <div class="ticket-id">Pedido #${ticket.id}</div>
       <div class="ticket-meta">${ticket.fecha} ${ticket.hora}</div>
-      <div class="ticket-meta">$${ticket.totalConDescuento.toLocaleString()}</div>
+      <div class="ticket-meta">$${(ticket.totalFinal || ticket.totalConDescuento).toLocaleString()}</div>
     `;
 
     div.addEventListener('click', () => {
@@ -548,26 +617,20 @@ function obtenerNumeroPedido() {
 function construirTicket(numeroPedido) {
   const { fecha, hora } = obtenerFechaHora();
   const medioPago = obtenerMedioPago();
-
-  let total = 0;
-
-  pedido.forEach(item => {
-    total += item.precio;
-    if (item.tipo === 'hamburguesa') {
-      item.extras.forEach(extra => {
-        total += extra.precio;
-      });
-    }
-  });
+  const tipoEntrega = obtenerTipoEntrega();
+  const { total, totalConDescuento } = calcularTotalesPedido();
+  const totalFinal = precioFinalManual ?? totalConDescuento;
 
   return {
     id: numeroPedido,
     fecha,
     hora,
     medioPago,
+    tipoEntrega,
     items: JSON.parse(JSON.stringify(pedido)),
     total,
-    totalConDescuento: Math.round(total * 0.9)
+    totalConDescuento,
+    totalFinal
   };
 }
 
@@ -623,23 +686,23 @@ async function imprimirTicket() {
         <strong>SMASH</strong><br>
         Pedido #${numeroPedido}<br>
         ${fecha} ${hora}<br>
-        <strong>${obtenerMedioPago().toUpperCase()}</strong>
+        <strong>${obtenerMedioPago().toUpperCase()}</strong><br>
+        <strong>${obtenerTipoEntrega().toUpperCase()}</strong>
       </div>
 
       <div class="line"></div>
   `;
 
 
-  let total = 0;
+  const { total, totalConDescuento } = calcularTotalesPedido();
+  const finalMostrado = precioFinalManual ?? totalConDescuento;
 
   pedido.forEach(item => {
     if (item.tipo === 'hamburguesa') {
       html += `<div class="item">${item.nombre}</div>`;
-      total += item.precio;
 
       item.extras.forEach(extra => {
         html += `<div class="extra">+ ${extra.nombre}</div>`;
-        total += extra.precio;
       });
 
     if (item.notas && item.notas.length) {
@@ -651,8 +714,7 @@ async function imprimirTicket() {
 
     } else {
             html += `<div class="item">${item.nombre}</div>`;
-            total += item.precio;
-
+      
         if (item.notas && item.notas.length) {
         item.notas.forEach(nota => {
         html += `<div class="extra">* ${nota}</div>`;
@@ -662,12 +724,10 @@ async function imprimirTicket() {
 
   });
 
-  const final = Math.round(total * 0.9);
-
   html += `
       <div class="line"></div>
       <div class="total">TOTAL: $${total.toLocaleString()}</div>
-      <div class="total">10% OFF: $${final.toLocaleString()}</div>
+      <div class="total">FINAL: $${finalMostrado.toLocaleString()}</div>
 
       <div class="line"></div>
       <div class="center">Gracias</div>
@@ -692,7 +752,7 @@ async function imprimirTicket() {
   
   document.getElementById('numeroPedido').value = '';
   document.querySelector('input[value="Efectivo"]').checked = true;
-
+  document.querySelector('input[name="tipoEntrega"][value="Pick up"]').checked = true;
 
 }
 
@@ -722,7 +782,8 @@ function reimprimirTicket(ticket) {
         <strong>SMASH</strong><br>
         Pedido #${ticket.id}<br>
         ${ticket.fecha} ${ticket.hora}<br>
-        <strong>${ticket.medioPago.toUpperCase()}</strong>
+        <strong>${ticket.medioPago.toUpperCase()}</strong><br>
+        <strong>${(ticket.tipoEntrega || 'Pick up').toUpperCase()}</strong>
       </div>
 
       <div class="line"></div>
@@ -742,13 +803,18 @@ function reimprimirTicket(ticket) {
 
     } else {
       html += `<div class="item">${item.nombre}</div>`;
+      if (item.notas && item.notas.length) {
+        item.notas.forEach(nota => {
+          html += `<div class="extra">* ${nota}</div>`;
+        });
+      }
     }
   });
 
   html += `
       <div class="line"></div>
       <div class="total">TOTAL: $${ticket.total.toLocaleString()}</div>
-      <div class="total">10% OFF: $${ticket.totalConDescuento.toLocaleString()}</div>
+      <div class="total">FINAL: $${(ticket.totalFinal || ticket.totalConDescuento).toLocaleString()}</div>
       <div class="line"></div>
       <div class="center">Reimpresión</div>
     </body>
