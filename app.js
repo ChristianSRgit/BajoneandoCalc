@@ -1,157 +1,87 @@
-async function validarAccesoCalculadora() {
-  // Si ya validó en esta sesión, no pedimos de nuevo
-  if (sessionStorage.getItem('calculadora_ok') === '1') {
-    return true;
-  }
-
-  const password = prompt('Ingresá la contraseña');
-
-  if (!password) return false;
-
-  try {
-    const res = await fetch('/.netlify/functions/validar-calculadora', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password })
-    });
-
-    if (!res.ok) return false;
-
-    sessionStorage.setItem('calculadora_ok', '1');
-    return true;
-  } catch (err) {
-    console.error('Error validando acceso', err);
-    return false;
-  }
-}
-
 // ==============================
-// Productos válidos para Sheets
+// CONFIGURACIÓN Y ESTADO
 // ==============================
 
-const PRODUCTOS_VALIDOS_SHEETS = [ //VERIFICAR CON LOS NOMBRES EN HTML CADA BURGA Y EXTRA, SI NO SE CARGAN BIEN, VA A DAR ERROR
-"Cuarto VEGGIE simple",
-  "Big VEGGIE simple",
-  "Cuarto VEGGIE doble",
-  "Big VEGGIE doble",
-  "Simple con queso",
-  "Cuarto simple",
-  "Big simple",
-  "Cuarto doble",
-  "Big doble",
-  "Cheddar doble",
-  "Cheddar Bacon",
-  "Cheddar triple",
-  "PROMO-2 Cuartos simples",
-  "PROMO-2 Big Dobles",
-  "PROMO-3 Simple con queso",
-  "Papas simples",
-  "Papas dobles",
-  "Papas Galaxia",
-  "Chicken POPS 10u",
-  "Chicken POPS 20u",
-  "Extra cheddar",
-  "Extra Bacon",
-  "Extra carne",
-  "Extra Sweet BBQ",
-  "Extra Honey mustard",
-  "Extra Spicy mayo",
-  "Extra tasty",
-  "Extra Ketchup",
-  "Extra Mostaza",
-  "Extra Mayonesa",
-  "Gaseosa lata Coca",
-  "Coca ZERO 600ml",
-  "Oreo smash"
+const PRODUCTOS_VALIDOS_SHEETS = [
+  "Cuarto VEGGIE simple", "Big VEGGIE simple", "Cuarto VEGGIE doble", "Big VEGGIE doble",
+  "Simple con queso", "Cuarto simple", "Big simple", "Cuarto doble", "Big doble",
+  "Cheddar doble", "Cheddar Bacon", "Cheddar triple", "PROMO-2 Cuartos simples",
+  "PROMO-2 Big Dobles", "PROMO-3 Simple con queso", "Papas simples", "Papas dobles",
+  "Papas Galaxia", "Chicken POPS 10u", "Chicken POPS 20u", "Extra cheddar",
+  "Extra Bacon", "Extra carne", "Extra Sweet BBQ", "Extra Honey mustard",
+  "Extra Spicy mayo", "Extra tasty", "Extra Ketchup", "Extra Mostaza",
+  "Extra Mayonesa", "Gaseosa lata Coca", "Coca ZERO 600ml", "Oreo smash"
 ];
-
-
-// ==============================
-// ESTADO GLOBAL DEL PEDIDO
-// ==============================
 
 let pedido = [];
 let hamburguesaActiva = null;
 let itemActivoParaNotas = null;
 let precioFinalManual = null;
 
-
 // ==============================
 // INICIALIZACIÓN
 // ==============================
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const accesoOk = await validarAccesoCalculadora();
-
+  const accesoOk = await validarAcceso();
   if (!accesoOk) {
-    document.body.innerHTML = `
-      <div style="padding:40px;text-align:center">
-        <h2>Acceso restringido</h2>
-      </div>
-    `;
+    document.body.innerHTML = '<div style="padding:40px;text-align:center"><h2>Acceso restringido</h2></div>';
     return;
   }
 
-  // 👇 solo si pasó la contraseña
-  bindBotones();
-  bindAcciones();
-  render();
+  bindEventos();
+  UI.renderPedido(pedido, precioFinalManual);
 });
 
+async function validarAcceso() {
+  if (sessionStorage.getItem('calculadora_ok') === '1') return true;
+  const password = prompt('Ingresá la contraseña');
+  if (!password) return false;
+  
+  const ok = await API.validarPassword(password);
+  if (ok) sessionStorage.setItem('calculadora_ok', '1');
+  return ok;
+}
 
 // ==============================
 // BINDINGS
 // ==============================
 
-function bindBotones() {
-  const botones = document.querySelectorAll('#botones button');
-
-  botones.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const tipo = btn.dataset.tipo;
-      const rol = btn.dataset.rol || null;
-      const nombre = btn.dataset.nombre;
-      const precio = Number(btn.dataset.precio);
-      const cantidadHamburguesas = Number(btn.dataset.hamburguesas || 0);
-
-      agregarItem({ tipo, rol, nombre, precio, cantidadHamburguesas });
-    });
+function bindEventos() {
+  // Botones de productos
+  document.querySelectorAll('#botones button').forEach(btn => {
+    btn.onclick = () => {
+      agregarItem({
+        tipo: btn.dataset.tipo,
+        rol: btn.dataset.rol || null,
+        nombre: btn.dataset.nombre,
+        precio: Number(btn.dataset.precio),
+        cantidadHamburguesas: Number(btn.dataset.hamburguesas || 0)
+      });
+    };
   });
-}
 
-function bindAcciones() {
-  document.getElementById('btnAgregarManual')
-    .addEventListener('click', agregarManual);
+  // Acciones generales
+  document.getElementById('btnAgregarManual').onclick = agregarManual;
+  document.getElementById('agregarDelivery').onclick = agregarDelivery;
+  document.getElementById('btnModificarFinal').onclick = modificarPrecioFinal;
+  document.getElementById('btnBorrarUltimo').onclick = borrarUltimo;
+  document.getElementById('btnVaciar').onclick = vaciarPedido;
+  document.getElementById('btnImprimir').onclick = imprimirTicket;
+  document.getElementById('btnAgregarNota').onclick = agregarNota;
 
-  const btnModificarFinal = document.getElementById('btnModificarFinal');
-  if (btnModificarFinal) {
-    btnModificarFinal.addEventListener('click', modificarPrecioFinal);
-  }
+  // Historial
+  document.getElementById('btnAbrirHistorial').onclick = () => {
+    UI.historialPanel.classList.remove('cerrado');
+    UI.renderHistorial(obtenerHistorial(), reimprimirTicket);
+  };
+  document.getElementById('btnCerrarHistorial').onclick = () => UI.historialPanel.classList.add('cerrado');
 
-  const btnAgregarDelivery = document.getElementById('agregarDelivery');
-  if (btnAgregarDelivery) {
-    btnAgregarDelivery.addEventListener('click', agregarDelivery);
-  }
-
-  document.getElementById('btnBorrarUltimo')
-    .addEventListener('click', borrarUltimo);
-
-  document.getElementById('btnVaciar')
-    .addEventListener('click', vaciarPedido);
-    
-  document.getElementById('btnImprimir')
-    .addEventListener('click', imprimirTicket);
-  
-  document.getElementById('btnAbrirHistorial')
-    .addEventListener('click', abrirHistorial);
-
-  document.getElementById('btnCerrarHistorial')
-    .addEventListener('click', cerrarHistorial);
-  
-  document.getElementById('btnAgregarNota')
-  .addEventListener('click', agregarNota);
-
-
+  // Caja
+  document.getElementById('btnAbrirApertura').onclick = () => UI.abrirModalCaja('apertura');
+  document.getElementById('btnAbrirCierre').onclick = () => UI.abrirModalCaja('cierre');
+  document.getElementById('btnCancelarCaja').onclick = () => UI.cerrarModalCaja();
+  document.getElementById('btnConfirmarCaja').onclick = confirmarCaja;
 }
 
 // ==============================
@@ -160,675 +90,207 @@ function bindAcciones() {
 
 function agregarItem(item) {
   precioFinalManual = null;
-
-  switch (item.tipo) {
-
-    case 'hamburguesa':
-      agregarHamburguesa(item);
-      break;
-
-    case 'extra':
-      manejarExtra(item);
-      break;
-    case 'chicken':
-      agregarItemSimple(item);
-      break;
-
-    case 'promo':
-    case 'papa':
-      agregarItemSimple(item);
-      break;
+  if (item.tipo === 'hamburguesa') {
+    const nueva = { ...item, extras: [], notas: [] };
+    pedido.push(nueva);
+    hamburguesaActiva = nueva;
+    itemActivoParaNotas = nueva;
+  } else if (item.tipo === 'extra' && item.rol === 'modificador' && hamburguesaActiva) {
+    hamburguesaActiva.extras.push({ nombre: item.nombre, precio: item.precio });
+  } else {
+    const nuevo = { ...item, notas: [] };
+    pedido.push(nuevo);
+    hamburguesaActiva = null;
+    itemActivoParaNotas = nuevo;
   }
-  contarHamburguesasPedido(); // 👈 DEBUG
-  render();
+  UI.renderPedido(pedido, precioFinalManual);
 }
-
-function agregarHamburguesa(item) {
-  const nueva = {
-  tipo: 'hamburguesa',
-  nombre: item.nombre,
-  precio: item.precio,
-  cantidadHamburguesas: 1,
-  extras: [],
-  notas: []
-};
-
-
-  pedido.push(nueva);
-  hamburguesaActiva = nueva;
-  itemActivoParaNotas = nueva;
-}
-
-function manejarExtra(item) {
-  // Extra modificador → intenta adjuntarse
-  if (item.rol === 'modificador' && hamburguesaActiva) {
-    hamburguesaActiva.extras.push({
-      nombre: item.nombre,
-      precio: item.precio
-    });
-    return;
-  }
-
-  // Extra producto → ítem independiente
-  agregarItemSimple(item);
-}
-
-function agregarItemSimple(item) {
-  const nuevo = {
-    tipo: item.tipo,
-    nombre: item.nombre,
-    precio: item.precio,
-    cantidadHamburguesas: item.cantidadHamburguesas || 0
-  };
-
-  nuevo.notas = [];
-  itemActivoParaNotas = nuevo;
-
-  pedido.push(nuevo);
-  hamburguesaActiva = null;
-}
-
-// ==============================
-// ACCIONES
-// ==============================
 
 function agregarManual() {
   const input = document.getElementById('precioManual');
   const valor = Number(input.value);
-
-  if (!valor || valor <= 0) return;
-
-  pedido.push({
-    tipo: 'manual',
-    nombre: 'Precio manual',
-    precio: Math.round(valor)
-  });
-
-  hamburguesaActiva = null;
-  itemActivoParaNotas = pedido[pedido.length - 1];
-  precioFinalManual = null;
+  if (!valor) return;
+  agregarItem({ tipo: 'manual', nombre: 'Precio manual', precio: Math.round(valor) });
   input.value = '';
-  render();
 }
 
 function agregarDelivery() {
   const input = document.getElementById('precioDelivery');
   const valor = Number(input.value);
-
-  if (!valor || valor <= 0) return;
-
-  pedido.push({
-    tipo: 'delivery',
-    nombre: 'Delivery',
-    precio: Math.round(valor),
-    notas: []
-  });
-
-  hamburguesaActiva = null;
-  itemActivoParaNotas = pedido[pedido.length - 1];
-  precioFinalManual = null;
+  if (!valor) return;
+  agregarItem({ tipo: 'delivery', nombre: 'Delivery', precio: Math.round(valor) });
   input.value = '';
-  render();
 }
 
 function modificarPrecioFinal() {
-  const valorIngresado = prompt('Ingresá el precio final manual');
-  if (valorIngresado === null) return;
-
-  const valor = Number(valorIngresado);
-  if (!valor || valor <= 0) {
-    alert('Ingresá un número válido para el precio final');
-    return;
-  }
-
-  precioFinalManual = Math.round(valor);
-  render();
+  const valor = prompt('Ingresá el precio final manual');
+  if (valor === null) return;
+  precioFinalManual = Math.round(Number(valor)) || null;
+  UI.renderPedido(pedido, precioFinalManual);
 }
 
 function borrarUltimo() {
-  if (pedido.length === 0) return;
-
   pedido.pop();
   precioFinalManual = null;
-
-  // Recalcular hamburguesa activa
-  hamburguesaActiva = null;
-  for (let i = pedido.length - 1; i >= 0; i--) {
-    if (pedido[i].tipo === 'hamburguesa') {
-      hamburguesaActiva = pedido[i];
-      break;
-    }
-  }
-
-  render();
+  hamburguesaActiva = pedido.slice().reverse().find(i => i.tipo === 'hamburguesa') || null;
+  UI.renderPedido(pedido, precioFinalManual);
 }
 
 function vaciarPedido() {
-  document.getElementById('numeroPedido').value = '';
   pedido = [];
   hamburguesaActiva = null;
   itemActivoParaNotas = null;
   precioFinalManual = null;
-  render();
-}
-
-function abrirHistorial() {
-  document.getElementById('historialPanel').classList.remove('cerrado');
-  renderHistorial();
-}
-
-function cerrarHistorial() {
-  document.getElementById('historialPanel').classList.add('cerrado');
+  document.getElementById('numeroPedido').value = '';
+  UI.renderPedido(pedido, precioFinalManual);
 }
 
 function agregarNota() {
   const input = document.getElementById('notaTexto');
   const texto = input.value.trim();
-
-  if (!texto) return;
-
-  if (!itemActivoParaNotas) {
-    alert('No hay un ítem activo para agregar la nota');
-    return;
-  }
-
+  if (!texto || !itemActivoParaNotas) return;
   itemActivoParaNotas.notas.push(texto);
   input.value = '';
-  render();
+  UI.renderPedido(pedido, precioFinalManual);
 }
 
-function contarHamburguesasPedido() {
-  const total = pedido.reduce((acc, item) => {
-    return acc + (item.cantidadHamburguesas || 0);
-  }, 0);
+// ==============================
+// IMPRESIÓN Y TICKET
+// ==============================
 
-  console.group('🍔 Conteo de hamburguesas');
-  pedido.forEach((item, index) => {
-    console.log(
-      `${index + 1}. ${item.nombre}`,
-      '→',
-      item.cantidadHamburguesas || 0
-    );
-  });
-  console.log('TOTAL HAMBURGUESAS:', total);
-  console.groupEnd();
+async function imprimirTicket() {
+  const numeroPedido = document.getElementById('numeroPedido').value.trim();
+  if (pedido.length === 0 || !numeroPedido) {
+    alert('Falta pedido o número de WhatsApp');
+    return;
+  }
 
-  return total;
-}
+  const totals = UI.calcularTotales(pedido);
+  const totalFinal = precioFinalManual ?? totals.totalConDescuento;
+  const { fecha, hora } = obtenerFechaHora();
 
-function calcularTotalesPedido() {
-  let total = 0;
-  let totalProductosConDescuento = 0;
-
-  pedido.forEach(item => {
-    total += item.precio;
-
-    if (item.tipo !== 'manual' && item.tipo !== 'delivery') {
-      totalProductosConDescuento += item.precio;
-    }
-
-    if (item.extras) {
-      item.extras.forEach(e => {
-        total += e.precio;
-        totalProductosConDescuento += e.precio;
-      });
-    }
-  });
-
-  const totalSinDescuento = total - totalProductosConDescuento;
-  const totalConDescuento = Math.round(totalProductosConDescuento * 0.9) + totalSinDescuento;
-
-  return {
-    total,
-    totalConDescuento
+  const ticket = {
+    id: numeroPedido,
+    fecha, hora,
+    items: JSON.parse(JSON.stringify(pedido)),
+    total: totals.total,
+    totalFinal,
+    medioPago: obtenerMedioPago(),
+    tipoEntrega: obtenerTipoEntrega()
   };
-}
 
-function construirPayloadVenta() {
-  const numeroPedido = obtenerNumeroPedido();
-  if (!numeroPedido) return null;
+  guardarTicket(ticket);
+  abrirVentanaImpresion(ticket);
 
-  const fecha = new Date();
-  const fechaISO = new Date().toLocaleDateString('sv-SE', {
-  timeZone: 'America/Argentina/Buenos_Aires'
-});
-
-  const productos = pedido
-    .filter(item => PRODUCTOS_VALIDOS_SHEETS.includes(item.nombre))
-    .map(item => item.nombre)
-    .join(', ');
-
-  const cantidadHamburguesas = contarHamburguesasPedido();
-
-  const { total, totalConDescuento } = calcularTotalesPedido();
-  const montoNetoFinal = precioFinalManual ?? totalConDescuento;
-
-  const medioPago = obtenerMedioPago();
-  const tipoEntrega = obtenerTipoEntrega();
-
+  // Enviar a Sheets
   const payload = {
-    nroPedido: numeroPedido,
-    fecha: fechaISO,
+    nroPedido: ticket.id,
+    fecha: new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Argentina/Buenos_Aires' }),
     canal: 'whatsapp',
-    cantidadHamburguesas,
-    productos,
-    montoBruto: total,
-    montoNeto: montoNetoFinal,
-    metodoDePago: medioPago,
-    tipoEntrega
+    cantidadHamburguesas: pedido.reduce((acc, i) => acc + (i.cantidadHamburguesas || 0), 0),
+    productos: pedido.filter(i => PRODUCTOS_VALIDOS_SHEETS.includes(i.nombre)).map(i => i.nombre).join(', '),
+    montoBruto: ticket.total,
+    montoNeto: ticket.totalFinal,
+    metodoDePago: ticket.medioPago,
+    tipoEntrega: ticket.tipoEntrega
   };
 
-  console.group('📦 Payload venta');
-  console.log(payload);
-  console.groupEnd();
-
-  return payload;
+  API.enviarVenta(payload);
+  vaciarPedido();
 }
 
-async function enviarVentaASheets(payloadVenta) {
-  if (!payloadVenta) return;
+function abrirVentanaImpresion(ticket) {
+  const win = window.open('', 'PRINT', 'height=600,width=400');
+  let itemsHtml = '';
+  ticket.items.forEach(i => {
+    itemsHtml += `<div>${i.nombre} - $${i.precio.toLocaleString()}</div>`;
+    if (i.extras) i.extras.forEach(e => itemsHtml += `<div style="margin-left:10px">+ ${e.nombre}</div>`);
+    if (i.notas) i.notas.forEach(n => itemsHtml += `<div style="margin-left:10px">* ${n}</div>`);
+  });
+
+  const html = `
+    <html>
+    <body style="font-family:monospace; font-size: 20px; width: 300px;">
+      <div style="text-align:center;">
+        <strong>SMASH</strong><br>
+        Pedido #${ticket.id}<br>
+        ${ticket.fecha} ${ticket.hora}<br>
+        ${ticket.medioPago.toUpperCase()} - ${ticket.tipoEntrega.toUpperCase()}
+      </div>
+      <hr>
+      ${itemsHtml}
+      <hr>
+      <div>TOTAL: $${ticket.total.toLocaleString()}</div>
+      <div style="font-size:24px; font-weight:bold;">FINAL: $${ticket.totalFinal.toLocaleString()}</div>
+    </body>
+    </html>
+  `;
+  win.document.write(html);
+  win.document.close();
+  win.print();
+  win.close();
+}
+
+function reimprimirTicket(ticket) {
+  abrirVentanaImpresion(ticket);
+}
+
+// ==============================
+// CAJA
+// ==============================
+
+async function confirmarCaja() {
+  const data = UI.obtenerDatosCaja();
+  if (data.wallet === 0 && data.efectivo === 0 && !data.observaciones) {
+    alert('Ingresá al menos un monto');
+    return;
+  }
 
   try {
-    const response = await fetch(obtenerUrlRegistrarVenta(), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payloadVenta)
-    });
-    const result = await response.json().catch(() => null); // nuevo checkeo
-    if (!response.ok) {
+    const btn = document.getElementById('btnConfirmarCaja');
+    btn.disabled = true;
+    btn.innerText = 'Enviando...';
 
-      const detail = result?.detail ? ` | detalle: ${JSON.stringify(result.detail)}` : '';
-      throw new Error(`Error al registrar venta (${response.status})${detail}`);
-    }
-
-    console.log('✅ Venta enviada a Google Sheets', result?.detail || 'sin detalle');
-  } catch (error) {
-    console.error('❌ No se pudo enviar la venta a Sheets', error);
+    await API.enviarCaja(data);
+    
+    alert('Caja registrada con éxito');
+    UI.cerrarModalCaja();
+  } catch (err) {
+    alert('Error al registrar caja: ' + err.message);
+  } finally {
+    const btn = document.getElementById('btnConfirmarCaja');
+    btn.disabled = false;
+    btn.innerText = 'Confirmar';
   }
-}
-
- function obtenerMedioPago() {
-  const seleccionado = document.querySelector(
-    'input[name="medioPago"]:checked'
-  );
-
-  return seleccionado ? seleccionado.value : 'Efectivo';
-}
-
-function obtenerTipoEntrega() {
-  const seleccionado = document.querySelector(
-    'input[name="tipoEntrega"]:checked'
-  );
-
-  return seleccionado ? seleccionado.value : 'Pick up';
-}
-
-function obtenerUrlRegistrarVenta() {
-  const configuredUrl = window.localStorage.getItem('registrarVentaUrl');
-  if (configuredUrl) return configuredUrl;
-
-  const host = window.location.hostname;
-  const isLiveServerLocal =
-    host === '127.0.0.1' || host === 'localhost'
-      ? window.location.port === '5500'
-      : false;
-
-  if (isLiveServerLocal) {
-    return 'http://localhost:8888/.netlify/functions/registrar-venta';
-  }
-
-  return '/.netlify/functions/registrar-venta';
 }
 
 // ==============================
-// CÁLCULOS
+// HELPERS
 // ==============================
-
-
-function calcularParticular() {
-  const input = document.getElementById('precioManual');
-  const valor = Number(input.value);
-
-  if (!valor || valor <= 0) {
-    document.getElementById('resultado').innerText =
-      'Ingresá un número válido';
-    return;
-  }
-
-  const final = Math.round(valor * 0.9);
-
-  document.getElementById('resultado').innerText =
-    `Original: $${valor.toLocaleString()} | 10% OFF: $${final.toLocaleString()}`;
-}
-
-// ==============================
-// RENDER
-// ==============================
-
-function render() {
-  const lista = document.getElementById('lista');
-  const resultado = document.getElementById('resultado');
-
-  if (pedido.length === 0) {
-    lista.innerHTML = '<div class="muted">No hay items</div>';
-    resultado.innerText = 'Original: - | Final: -';
-    return;
-  }
-
-  let html = '';
-
-  pedido.forEach(item => {
-    if (item.tipo === 'hamburguesa') {
-      html += `<strong>${item.nombre}</strong> — $${item.precio.toLocaleString()}<br>`;
-
-      item.extras.forEach(extra => {
-        html += `&nbsp;&nbsp;+ ${extra.nombre} — $${extra.precio.toLocaleString()}<br>`;
-      });
-
-    if (item.notas && item.notas.length) {
-      item.notas.forEach(nota => {
-        html += `&nbsp;&nbsp;* ${nota}<br>`;
-      });
-}
-
-
-    } else {
-            html += `<strong>${item.nombre}</strong> — $${item.precio.toLocaleString()}<br>`;
-      
-      if (item.notas && item.notas.length) {
-        item.notas.forEach(nota => {
-          html += `&nbsp;&nbsp;* ${nota}<br>`;
-        });
-      }
-    }
-
-  });
-
-  const { total, totalConDescuento } = calcularTotalesPedido();
-  const precioFinalMostrado = precioFinalManual ?? totalConDescuento;
-
-  html += `
-    <div class="total">
-      Total: <strong>$${total.toLocaleString()}</strong>
-    </div>
-    <div class="final">
-      $${precioFinalMostrado.toLocaleString()} final
-    </div>
-  `;
-
-  lista.innerHTML = html;
-  resultado.innerText =
-    `Original: $${total.toLocaleString()} | Final: $${precioFinalMostrado.toLocaleString()}`;
-}
-
-function renderHistorial() {
-  const contenedor = document.getElementById('historialLista');
-  const historial = obtenerHistorial();
-
-  if (historial.length === 0) {
-    contenedor.innerHTML = '<div class="muted">No hay tickets</div>';
-    return;
-  }
-
-  contenedor.innerHTML = '';
-
-  historial.slice().reverse().forEach(ticket => {
-    const div = document.createElement('div');
-    div.className = 'ticket-item';
-
-    div.innerHTML = `
-      <div class="ticket-id">Pedido #${ticket.id}</div>
-      <div class="ticket-meta">${ticket.fecha} ${ticket.hora}</div>
-      <div class="ticket-meta">$${(ticket.totalFinal || ticket.totalConDescuento).toLocaleString()}</div>
-    `;
-
-    div.addEventListener('click', () => {
-      reimprimirTicket(ticket);
-    });
-
-    contenedor.appendChild(div);
-  });
-}
 
 function obtenerFechaHora() {
   const now = new Date();
-
-  const fecha = now.toLocaleDateString('es-AR', {
-    timeZone: 'America/Argentina/Buenos_Aires'
-  });
-
-  const hora = now.toLocaleTimeString('es-AR', {
-    timeZone: 'America/Argentina/Buenos_Aires',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-
-  return { fecha, hora };
-}
-
-
-function obtenerNumeroPedido() {
-  const input = document.getElementById('numeroPedido');
-  const valor = input.value.trim();
-
-  if (!valor || valor.length < 3) return null;
-
-  return valor;
-}
-
-function construirTicket(numeroPedido) {
-  const { fecha, hora } = obtenerFechaHora();
-  const medioPago = obtenerMedioPago();
-  const tipoEntrega = obtenerTipoEntrega();
-  const { total, totalConDescuento } = calcularTotalesPedido();
-  const totalFinal = precioFinalManual ?? totalConDescuento;
-
+  const options = { timeZone: 'America/Argentina/Buenos_Aires' };
   return {
-    id: numeroPedido,
-    fecha,
-    hora,
-    medioPago,
-    tipoEntrega,
-    items: JSON.parse(JSON.stringify(pedido)),
-    total,
-    totalConDescuento,
-    totalFinal
+    fecha: now.toLocaleDateString('es-AR', options),
+    hora: now.toLocaleTimeString('es-AR', { ...options, hour: '2-digit', minute: '2-digit' })
   };
 }
 
+function obtenerMedioPago() {
+  return document.querySelector('input[name="medioPago"]:checked').value;
+}
 
-function guardarTicket(ticket) {
-  const historial = obtenerHistorial();
-  historial.push(ticket);
-  localStorage.setItem('historialTickets', JSON.stringify(historial));
+function obtenerTipoEntrega() {
+  return document.querySelector('input[name="tipoEntrega"]:checked').value;
+}
+
+function guardarTicket(t) {
+  const h = obtenerHistorial();
+  h.push(t);
+  localStorage.setItem('historialTickets', JSON.stringify(h.slice(-50)));
 }
 
 function obtenerHistorial() {
   return JSON.parse(localStorage.getItem('historialTickets')) || [];
-}
-
-// ==============================
-// IMPRESIÓN DE TICKET
-// ==============================
-async function imprimirTicket() {
-  if (pedido.length === 0) return;
-
-  const numeroPedido = obtenerNumeroPedido();
-  if (!numeroPedido) {
-    alert('Ingresá los últimos 4 dígitos de WhatsApp');
-    return;
-  }
-
-    const { fecha, hora } = obtenerFechaHora();
-
-  let html = `
-    <html>
-    <head>
-      <title>Ticket</title>
-      <style>
-        body {
-          font-family: monospace;
-          font-size: 30px;
-          margin: 0;
-          padding: 0px;
-          width: 150mm;
-          height: auto;
-        }
-        .center { text-align: center; }
-        .line { border-top: 1px dashed #000; margin: 6px 0; }
-        .item { margin-bottom: 4px; }
-        .extra { margin-left: 10px; }
-        .total { font-weight: bold; margin-top: 8px; }
-        .header { margin-bottom: 6px; }
-      </style>
-    </head>
-    <body>
-
-      <div class="center header">
-        <strong>SMASH</strong><br>
-        Pedido #${numeroPedido}<br>
-        ${fecha} ${hora}<br>
-        <strong>${obtenerMedioPago().toUpperCase()}</strong><br>
-        <strong>${obtenerTipoEntrega().toUpperCase()}</strong>
-      </div>
-
-      <div class="line"></div>
-  `;
-
-
-  const { total, totalConDescuento } = calcularTotalesPedido();
-  const finalMostrado = precioFinalManual ?? totalConDescuento;
-
-  pedido.forEach(item => {
-    if (item.tipo === 'hamburguesa') {
-      html += `<div class="item">${item.nombre}</div>`;
-
-      item.extras.forEach(extra => {
-        html += `<div class="extra">+ ${extra.nombre}</div>`;
-      });
-
-    if (item.notas && item.notas.length) {
-      item.notas.forEach(nota => {
-      html += `<div class="extra">* ${nota}</div>`;
-  });
-}
-
-
-    } else {
-            html += `<div class="item">${item.nombre}</div>`;
-      
-        if (item.notas && item.notas.length) {
-        item.notas.forEach(nota => {
-        html += `<div class="extra">* ${nota}</div>`;
-        });
-  }
-}
-
-  });
-
-  html += `
-      <div class="line"></div>
-      <div class="total">TOTAL: $${total.toLocaleString()}</div>
-      <div class="total">FINAL: $${finalMostrado.toLocaleString()}</div>
-
-      <div class="line"></div>
-      <div class="center">Gracias</div>
-      <img src="../smash.png" class="ticket-img" alt="SMASH">
-    </body>
-    </html>
-  `;
-  const ticket = construirTicket(numeroPedido);
-  guardarTicket(ticket);
-
-  const win = window.open('', 'PRINT', 'height=600,width=400');
-  win.document.write(html);
-  win.document.close();
-  win.focus();
-  const payloadVenta = construirPayloadVenta();
-  await enviarVentaASheets(payloadVenta);
-  win.print();
-  win.close();
-    
-    // Reset estado
-  vaciarPedido();
-  
-  document.getElementById('numeroPedido').value = '';
-  document.querySelector('input[value="Efectivo"]').checked = true;
-  document.querySelector('input[name="tipoEntrega"][value="Pick up"]').checked = true;
-
-}
-
-function reimprimirTicket(ticket) {
-  let html = `
-    <html>
-    <head>
-      <title>Ticket</title>
-      <style>
-        body {
-          font-family: monospace;
-          font-size: 30px;
-          margin: 0;
-          padding: 0px;
-          width: 150mm;
-          height: auto;
-        }
-        .center { text-align: center; }
-        .line { border-top: 1px dashed #000; margin: 6px 0; }
-        .item { margin-bottom: 4px; }
-        .extra { margin-left: 10px; }
-        .total { font-weight: bold; margin-top: 8px; }
-      </style>
-    </head>
-    <body>
-      <div class="center">
-        <strong>SMASH</strong><br>
-        Pedido #${ticket.id}<br>
-        ${ticket.fecha} ${ticket.hora}<br>
-        <strong>${ticket.medioPago.toUpperCase()}</strong><br>
-        <strong>${(ticket.tipoEntrega || 'Pick up').toUpperCase()}</strong>
-      </div>
-
-      <div class="line"></div>
-  `;
-
-  ticket.items.forEach(item => {
-    if (item.tipo === 'hamburguesa') {
-      html += `<div class="item">${item.nombre}</div>`;
-      item.extras.forEach(extra => {
-        html += `<div class="extra">+ ${extra.nombre}</div>`;
-      });
-    if (item.notas && item.notas.length) {
-      item.notas.forEach(nota => {
-        html += `<div class="extra">* ${nota}</div>`;
-  });
-}
-
-    } else {
-      html += `<div class="item">${item.nombre}</div>`;
-      if (item.notas && item.notas.length) {
-        item.notas.forEach(nota => {
-          html += `<div class="extra">* ${nota}</div>`;
-        });
-      }
-    }
-  });
-
-  html += `
-      <div class="line"></div>
-      <div class="total">TOTAL: $${ticket.total.toLocaleString()}</div>
-      <div class="total">FINAL: $${(ticket.totalFinal || ticket.totalConDescuento).toLocaleString()}</div>
-      <div class="line"></div>
-      <div class="center">Reimpresión</div>
-    </body>
-    </html>
-  `;
-
-  const win = window.open('', 'PRINT', 'height=400,width=400');
-  win.document.write(html);
-  win.document.close();
-  win.focus();
-  win.print();
-  win.close();
 }

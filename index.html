@@ -1,288 +1,130 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" href="SmashIco.ico" type="image/x-icon">
-  <title>Calculadora 10% OFF</title>
-
+  <title>Calculadora v1.5</title>
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="styles.css"/>
 </head>
 
 <body>
-  <h2>SMASH - Calculadora 10% OFF v1.5</h2>
+  <button id="btnAbrirHistorial" class="btn-historial">Historial</button>
+  <h2>SMASH v1.5</h2>
+
+  <div class="caja-controls">
+    <button id="btnAbrirApertura">Apertura Caja</button>
+    <button id="btnAbrirCierre">Cierre Turno</button>
+  </div>
+
+  <div id="modalCaja" class="modal-caja">
+    <div class="modal-content">
+      <h3 id="modalCajaTitulo">Apertura de Caja</h3>
+      <input type="number" id="cajaWallet" placeholder="Wallet (MP/Transferencia)">
+      <input type="number" id="cajaEfectivo" placeholder="Efectivo en Caja">
+      <input type="text" id="cajaObs" placeholder="Observaciones">
+      <div class="actions">
+        <button id="btnCancelarCaja" class="ghost">Cerrar</button>
+        <button id="btnConfirmarCaja" class="hamburguesa">Confirmar</button>
+      </div>
+    </div>
+  </div>
 
   <div id="botones">
+    <div class="category-title">Hamburguesas</div>
+    <button class="hamburguesa veggie" data-tipo="hamburguesa" data-nombre="Cuarto VEGGIE simple" data-hamburguesas="1" data-precio="12950">Cuarto VEGGIE s. <span class="muted">$12.950</span></button>
+    <button class="hamburguesa veggie" data-tipo="hamburguesa" data-nombre="Big VEGGIE simple" data-hamburguesas="1" data-precio="12950">Big VEGGIE s. <span class="muted">$12.950</span></button>
+    <button class="hamburguesa veggie" data-tipo="hamburguesa" data-nombre="Cuarto VEGGIE doble" data-hamburguesas="1" data-precio="15420">Cuarto VEGGIE d. <span class="muted">$15.420</span></button>
+    <button class="hamburguesa veggie" data-tipo="hamburguesa" data-nombre="Big VEGGIE doble" data-hamburguesas="1" data-precio="15420">Big VEGGIE d. <span class="muted">$15.420</span></button>
+    <button class="hamburguesa" data-tipo="hamburguesa" data-nombre="Simple con queso" data-hamburguesas="1" data-precio="12000">Simple c/ queso <span class="muted">$12.000</span></button>
+    <button class="hamburguesa" data-tipo="hamburguesa" data-nombre="Cuarto simple" data-hamburguesas="1" data-precio="12950">Cuarto simple <span class="muted">$12.950</span></button>
+    <button class="hamburguesa" data-tipo="hamburguesa" data-nombre="Big simple" data-hamburguesas="1" data-precio="12950">Big simple <span class="muted">$12.950</span></button>
+    <button class="hamburguesa" data-tipo="hamburguesa" data-nombre="Cuarto doble" data-hamburguesas="1" data-precio="16450">Cuarto doble <span class="muted">$16.450</span></button>
+    <button class="hamburguesa" data-tipo="hamburguesa" data-nombre="Big doble" data-hamburguesas="1" data-precio="16450">Big doble <span class="muted">$16.450</span></button>
+    <button class="hamburguesa" data-tipo="hamburguesa" data-nombre="Cheddar doble" data-hamburguesas="1" data-precio="16450">Cheddar doble <span class="muted">$16.450</span></button>
+    <button class="hamburguesa" data-tipo="hamburguesa" data-nombre="Cheddar Bacon" data-hamburguesas="1" data-precio="18500">Cheddar Bacon <span class="muted">$18.500</span></button>
+    <button class="hamburguesa" data-tipo="hamburguesa" data-nombre="Cheddar triple" data-hamburguesas="1" data-precio="20000">Cheddar triple <span class="muted">$20.000</span></button>
 
-    <!-- HAMBURGUESAS -->
+    <div class="category-title">Promos & Combos</div>
+    <button class="promo" data-tipo="promo" data-nombre="PROMO-2 Cuartos simples" data-hamburguesas="2" data-precio="22400">2x Cuartos s. <span class="muted">$22.400</span></button>
+    <button class="promo" data-tipo="promo" data-nombre="PROMO-2 Big Dobles" data-hamburguesas="2" data-precio="29978">2x Big Dobles <span class="muted">$29.978</span></button>
+    <button class="promo" data-tipo="promo" data-nombre="PROMO-3 Simple con queso" data-hamburguesas="3" data-precio="33000">3x Simple c/q <span class="muted">$33.000</span></button>
 
-     <button class="hamburguesa veggie" data-tipo="hamburguesa" data-nombre="Cuarto VEGGIE simple" data-hamburguesas="1" data-precio="12950">
-      Cuarto VEGGIE simple<br><span class="muted">$12.950</span>
-    </button>
+    <div class="category-title">Acompañamientos</div>
+    <button class="papa" data-tipo="papa" data-nombre="Papas simples" data-hamburguesas="0" data-precio="3500">Papas simples <span class="muted">$3.500</span></button>
+    <button class="papa" data-tipo="papa" data-nombre="Papas dobles" data-hamburguesas="0" data-precio="5999">Papas dobles <span class="muted">$5.999</span></button>
+    <button class="papa" data-tipo="papa" data-nombre="Papas Galaxia" data-hamburguesas="0" data-precio="13000">Papas Galaxia <span class="muted">$13.000</span></button>
+    <button class="chicken" data-tipo="chicken" data-nombre="Chicken POPS 10u" data-hamburguesas="0" data-precio="6000">Pops 10u <span class="muted">$6.000</span></button>
+    <button class="chicken" data-tipo="chicken" data-nombre="Chicken POPS 20u" data-hamburguesas="0" data-precio="10000">Pops 20u <span class="muted">$10.000</span></button>
 
-     <button class="hamburguesa veggie" data-tipo="hamburguesa" data-nombre="Big VEGGIE simple" data-hamburguesas="1" data-precio="12950">
-      Big VEGGIE simple<br><span class="muted">$12.950</span>
-    </button> 
+    <div class="category-title">Extras (para Burger)</div>
+    <button class="extra" data-tipo="extra" data-rol="modificador" data-nombre="Extra cheddar" data-precio="1500">Extra cheddar <span class="muted">$1.500</span></button>
+    <button class="extra" data-tipo="extra" data-rol="modificador" data-nombre="Extra Bacon" data-precio="2500">Extra Bacon <span class="muted">$2.500</span></button>
+    <button class="extra" data-tipo="extra" data-rol="modificador" data-nombre="Extra carne" data-precio="3000">Extra carne <span class="muted">$3.000</span></button>
 
-       <button class="hamburguesa veggie" data-tipo="hamburguesa" data-nombre="Cuarto VEGGIE doble" data-hamburguesas="1" data-precio="15420">
-      Cuarto  VEGGIE doble<br><span class="muted">$15.420</span>
-    </button>
+    <div class="category-title">Dips & Aderezos</div>
+    <button class="extra chickenDip" data-tipo="extra" data-rol="producto" data-nombre="Extra Sweet BBQ" data-precio="1500">Sweet BBQ <span class="muted">$1.500</span></button>
+    <button class="extra chickenDip" data-tipo="extra" data-rol="producto" data-nombre="Extra Honey mustard" data-precio="1500">Honey mustard <span class="muted">$1.500</span></button>
+    <button class="extra chickenDip" data-tipo="extra" data-rol="producto" data-nombre="Extra Spicy mayo" data-precio="1500">Spicy mayo <span class="muted">$1.500</span></button>
+    <button class="extra" data-tipo="extra" data-rol="producto" data-nombre="Extra tasty" data-precio="1000">Tasty <span class="muted">$1.000</span></button>
+    <button class="extra" data-tipo="extra" data-rol="producto" data-nombre="Extra Ketchup" data-precio="1000">Ketchup <span class="muted">$1.000</span></button>
+    <button class="extra" data-tipo="extra" data-rol="producto" data-nombre="Extra Mostaza" data-precio="1000">Mostaza <span class="muted">$1.000</span></button>
+    <button class="extra" data-tipo="extra" data-rol="producto" data-nombre="Extra Mayonesa" data-precio="1000">Mayonesa <span class="muted">$1.000</span></button>
 
-          <button class="hamburguesa veggie" data-tipo="hamburguesa" data-nombre="Big VEGGIE doble" data-hamburguesas="1" data-precio="15420">
-      Big VEGGIE doble<br><span class="muted">$15.420</span>
-    </button>
-    
-    <button class="hamburguesa" data-tipo="hamburguesa" data-nombre="Simple con queso" data-hamburguesas="1" data-precio="12000">
-      Simple con queso<br><span class="muted">$12.000</span>
-    </button>
-
-   <button class="hamburguesa" data-tipo="hamburguesa" data-nombre="Cuarto simple" data-hamburguesas="1" data-precio="12950">
-      Cuarto simple<br><span class="muted">$12.950</span>
-    </button>
-
-    <button class="hamburguesa" data-tipo="hamburguesa" data-nombre="Big simple" data-hamburguesas="1" data-precio="12950">
-      Big simple<br><span class="muted">$12.950</span>
-    </button>
-
-
-     <button class="hamburguesa" data-tipo="hamburguesa" data-nombre="Cuarto doble" data-hamburguesas="1" data-precio="16450">
-      Cuarto doble<br><span class="muted">$16.450</span>
-    </button>
-
-  
-
-     <button class="hamburguesa" data-tipo="hamburguesa" data-nombre="Big doble" data-hamburguesas="1" data-precio="16450">
-      Big doble<br><span class="muted">$16.450</span>
-    </button>
-
-  
-    
-
-    <button class="hamburguesa" data-tipo="hamburguesa" data-nombre="Cheddar doble" data-hamburguesas="1" data-precio="16450">
-      Cheddar doble<br><span class="muted">$16.450</span>
-    </button>
-    <button class="hamburguesa" data-tipo="hamburguesa" data-nombre="Cheddar Bacon" data-hamburguesas="1" data-precio="18500">
-      Cheddar Bacon<br><span class="muted">$18.500</span>
-    </button>
-    <button class="hamburguesa" data-tipo="hamburguesa" data-nombre="Cheddar triple" data-hamburguesas="1" data-precio="20000">
-      Cheddar triple<br><span class="muted">$20.000</span>
-    </button>
-    
-
-
-    <!-- PROMOS -->
-
-    <button class="promo" data-tipo="promo" data-nombre="PROMO-2 Cuartos simples" data-hamburguesas="2" data-precio="22400">
-      PROMO-2 Cuartos simples<br><span class="muted">$22.400</span>
-    </button>
-
-    <button class="promo" data-tipo="promo" data-nombre="PROMO-2 Big Dobles" data-hamburguesas="2" data-precio="29978">
-      PROMO-2 Big Dobles<br><span class="muted">$29.978</span>
-    </button>
-    
-    <button class="promo" data-tipo="promo" data-nombre="PROMO-3 Simple con queso" data-hamburguesas="3" data-precio="33000">
-      PROMO-3 Simple con queso<br><span class="muted">$33.000</span>
-    </button>
-
-    <!-- PAPAS -->
-    <button class="papa" data-tipo="papa" data-nombre="Papas simples" data-hamburguesas="0" data-precio="3500">
-      Papas simples<br><span class="muted">$3.500</span>
-    </button>
-    <button class="papa" data-tipo="papa" data-nombre="Papas dobles" data-hamburguesas="0" data-precio="5999">
-      Papas dobles<br><span class="muted">$5.999</span>
-    </button>
-    <button class="papa" data-tipo="papa" data-nombre="Papas Galaxia" data-hamburguesas="0" data-precio="13000">
-      Papas Galaxia<br><span class="muted">$13.000</span>
-    </button>
-
-    <!-- Chicken POPS -->
-    <button class="chicken" data-tipo="chicken" data-nombre="Chicken POPS 10u" data-hamburguesas="0" data-precio="6000">
-      Chicken POPS 10u<br><span class="muted">$6.000</span>
-    </button>
-      <button class="chicken" data-tipo="chicken" data-nombre="Chicken POPS 20u" data-hamburguesas="0" data-precio="10000">
-        Chicken POPS 20u<br><span class="muted">$10.000</span>
-      </button>
-
-   <!-- EXTRAS / MODIFICADORES -->
-<button class="extra"
-  data-tipo="extra"
-  data-rol="modificador"
-  data-nombre="Extra cheddar"
-  data-hamburguesas="0"
-  data-precio="1500">
-  Extra cheddar<br><span class="muted">$1.500</span>
-</button>
-
-<button class="extra"
-  data-tipo="extra"
-  data-rol="modificador"
-  data-nombre="Extra Bacon"
-  data-hamburguesas="0"
-  data-precio="2500">
-  Extra Bacon<br><span class="muted">$2.500</span>
-</button>
-
-<button class="extra"
-  data-tipo="extra"
-  data-rol="modificador"
-  data-nombre="Extra carne"
-  data-hamburguesas="0"
-  data-precio="3000">
-  Extra carne<br><span class="muted">$3.000</span>
-</button>
-
-<!-- EXTRAS / PRODUCTOS INDEPENDIENTES (DIPS / BEBIDAS / POSTRE) -->
-
-<button class="extra chickenDip"
-  data-tipo="extra"
-  data-rol="producto"
-  data-nombre="Extra Sweet BBQ"
-  data-hamburguesas="0"
-  data-precio="1500">
-  Extra Sweet BBQ<br><span class="muted">$1.500</span>
-</button>
-
-<button class="extra chickenDip"
-  data-tipo="extra"
-  data-rol="producto"
-  data-nombre="Extra Honey mustard"
-  data-hamburguesas="0"
-  data-precio="1500">
-  Extra Honey mustard<br><span class="muted">$1.500</span>
-</button>
-
-<button class="extra chickenDip"
-  data-tipo="extra"
-  data-rol="producto"
-  data-nombre="Extra Spicy mayo"
-  data-hamburguesas="0"
-  data-precio="1500">
-  Extra Spicy mayo<br><span class="muted">$1.500</span>
-</button>
-
-<button class="extra"
-  data-tipo="extra"
-  data-rol="producto"
-  data-nombre="Extra tasty"
-  data-hamburguesas="0"
-  data-precio="1000">
-  Extra tasty<br><span class="muted">$1.000</span>
-</button>
-
-<button class="extra"
-  data-tipo="extra"
-  data-rol="producto"
-  data-nombre="Extra Ketchup"
-  data-hamburguesas="0"
-  data-precio="1000">
-  Extra Ketchup<br><span class="muted">$1.000</span>
-</button>
-
-<button class="extra"
-  data-tipo="extra"
-  data-rol="producto"
-  data-nombre="Extra Mostaza"
-  data-hamburguesas="0"
-  data-precio="1000">
-  Extra Mostaza<br><span class="muted">$1.000</span>
-</button>
-
-<button class="extra"
-  data-tipo="extra"
-  data-rol="producto"
-  data-nombre="Extra Mayonesa"
-  data-hamburguesas="0"
-  data-precio="1000">
-  Extra Mayonesa<br><span class="muted">$1.000</span>
-</button>
-
-<button class="bebida"
-  data-tipo="extra"
-  data-rol="producto"
-  data-nombre="Gaseosa lata Coca"
-  data-hamburguesas="0"
-  data-precio="2800">
-  Lata coca 354ml<br><span class="muted">$2.800</span>
-</button>
-<button class="bebida"
-  data-tipo="extra"
-  data-rol="producto"
-  data-nombre="Coca ZERO 600ml"
-  data-hamburguesas="0"
-  data-precio="2800">
-  Coca ZERO 600ml<br><span class="muted">$2.800</span>
-</button>
-
-<button class="extra"
-  data-tipo="extra"
-  data-rol="producto"
-  data-nombre="Oreo smash"
-  data-hamburguesas="0"
-  data-precio="4000">
-  Oreo smash<br><span class="muted">$4.000</span>
-</button>
-
-  </div>
-  <div class="notas">
-    <input id="precioManual" type="number" placeholder="Precio manual" />
-    <input id="precioDelivery" type="number" min="0" step="1" placeholder="Precio delivery" />
-    <input id="numeroPedido" type="number" placeholder="Últimos 4 dígitos WhatsApp"/>
+    <div class="category-title">Bebidas & Postre</div>
+    <button class="bebida" data-tipo="extra" data-rol="producto" data-nombre="Gaseosa lata Coca" data-precio="2800">Lata Coca <span class="muted">$2.800</span></button>
+    <button class="bebida" data-tipo="extra" data-rol="producto" data-nombre="Coca ZERO 600ml" data-precio="2800">Coca Zero 600 <span class="muted">$2.800</span></button>
+    <button class="extra" data-tipo="extra" data-rol="producto" data-nombre="Oreo smash" data-precio="4000">Oreo Smash <span class="muted">$4.000</span></button>
   </div>
 
-  <div class="notas">
-      <input id="notaTexto" type="text" placeholder="Nota para la hamburguesa / combo (ej: sin cebolla)"/>
-      <button id="btnAgregarNota" class="ghost">Agregar nota</button>
+  <div class="notas-grid">
+    <input id="numeroPedido" type="number" class="full-width" placeholder="Últimos 4 WhatsApp">
+    <input id="precioManual" type="number" placeholder="Precio Manual">
+    <input id="precioDelivery" type="number" placeholder="Delivery">
+    <input id="notaTexto" class="full-width" type="text" placeholder="Nota (ej: sin cebolla)">
+    <button id="btnAgregarNota" class="ghost full-width">Agregar Nota</button>
   </div>
 
-
-
-  <div class="controls">
-    <button id="btnAgregarManual" class="ghost">Agregar precio</button>
+  <div class="actions">
+    <button id="btnAgregarManual" class="ghost">Agregar Manual</button>
     <button id="agregarDelivery" class="ghost">Agregar Delivery</button>
-    <button id="btnModificarFinal" class="ghost">Modificar precio final</button>
+    <button id="btnModificarFinal" class="ghost">Ajuste Final</button>
   </div>
-
 
   <div class="lista" id="lista"></div>
-<div id="resultado" class="resultado"></div>
-<div class="medio-pago notas">
-  <label><input type="radio" name="medioPago" value="Efectivo" checked>Efectivo</label>
 
-  <label><input type="radio" name="medioPago" value="Online">Transferencia</label>
-</div>
-
-<div class="medio-pago notas">
-  <label><input type="radio" name="tipoEntrega" value="Pick up" checked>Pick up</label>
-  <label><input type="radio" name="tipoEntrega" value="Delivery">Delivery</label>
-</div>
-
+  <div class="selectors-grid">
+    <label><input type="radio" name="medioPago" value="Efectivo" checked> Efectivo</label>
+    <label><input type="radio" name="medioPago" value="Online"> Transferencia</label>
+    <label><input type="radio" name="tipoEntrega" value="Pick up" checked> Pick up</label>
+    <label><input type="radio" name="tipoEntrega" value="Delivery"> Delivery</label>
+  </div>
 
   <div class="actions">
     <button id="btnBorrarUltimo" class="ghost">Borrar último</button>
     <button id="btnVaciar" class="danger">Vaciar pedido</button>
-    <button id="btnImprimir" class="ghost">Imprimir ticket</button>
   </div>
 
-  <!-- HISTORIAL DE TICKETS -->
-<div id="historialPanel" class="historial cerrado">
-  <div class="historial-header">
-    <span>Historial</span>
-    <button id="btnCerrarHistorial">✕</button>
+  <!-- STICKY SUMMARY -->
+  <div class="sticky-summary">
+    <div class="sticky-content">
+      <div id="stickyResumen" class="muted" style="font-size:12px">Original: $0</div>
+      <div id="stickyTotal" class="sticky-total">$0</div>
+      <button id="btnImprimir" class="hamburguesa">TICKET</button>
+    </div>
   </div>
 
-  <div id="historialLista" class="historial-lista">
-    <!-- tickets -->
+  <div id="historialPanel" class="historial cerrado">
+    <div class="historial-header">
+      <span>Historial</span>
+      <button id="btnCerrarHistorial">✕</button>
+    </div>
+    <div id="historialLista" class="historial-lista"></div>
   </div>
-</div>
 
-<button id="btnAbrirHistorial" class="btn-historial">
-  Historial
-</button>
-
-  <!-- JS externo -->
+  <script src="api.js"></script>
+  <script src="ui.js"></script>
   <script src="app.js"></script>
-
 </body>
 </html>
-
